@@ -744,3 +744,6 @@ $string ['stage'] = 'Stage';
 $string ['agreement'] = 'Agreement';
 $string ['yourmarking'] = 'Your marking';
 $string['cycle'] = 'Cycle';
+$string['course'] = 'Course';
+$string['section'] = 'Section';
+$string['filters'] = 'Filters';
