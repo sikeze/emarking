@@ -645,3 +645,20 @@ function emarking_array_by_date($isyears, $queryresult, $secondarraytitle, $quer
 	}
 	return $array;
 }
+function emarking_get_course_activities($course) {
+	global $DB;
+	$sqlactivities = "SELECT c.fullname as coursename, c.shortname as shortname, eexam.name as emarkingname
+							   FROM  {emarking_exams} AS eexam 
+							   INNER JOIN {course} AS c ON (c.id = eexam.course)
+						       WHERE c.id = ?";
+	// Gets the information of the above query.
+	if ($activities = $DB->get_records_sql($sqlactivities, array($course))) {
+		$courseactivities = array();
+		foreach($activities as $activity){
+			$courseactivities[$activity->coursename]= $activity->shortname.' - '.$activity->emarkingname;
+		}
+		return $courseactivities;
+	} else {
+		return 0;
+	}
+}
