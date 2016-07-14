@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 /**
- * This page shows a list of exams sent for printing.
+* 
+*
 * It can be reached from a block within a category or from an EMarking
 * course module
 *
@@ -27,26 +28,37 @@ require_once(dirname(dirname(dirname(dirname(__FILE__)))) . "/config.php");
 require_once($CFG->dirroot . "/mod/emarking/locallib.php");
 require_once(dirname(__FILE__) . '/locallib.php');
 require_once(dirname(__FILE__) . '/forms/cycle_form.php');
-//require_once('reports/locallib.php');
+
 global $DB, $USER, $CFG, $OUTPUT;
+
 // Course id, if the user comes from a course.
 $courseid = required_param("course", PARAM_INT);
+$emarkingid = optional_param("eid", -1, PARAM_INT);
+$selectedcategory = optional_param("selectedcategory", "NULL", PARAM_TEXT);
+$selectedcourse = optional_param("selectedcourse", "NULL", PARAM_TEXT);
+$selectedsection = optional_param("selectedsection", -1, PARAM_INT);
+
+
 // First check that the user is logged in.
 require_login();
+
 if (isguestuser()) {
 	die();
 }
+
 // Validate that the parameter corresponds to a course.
 if (! $course = $DB->get_record("course", array(
 		"id" => $courseid))) {
 		print_error(get_string("invalidcourseid", "mod_emarking"));
 }
+
 // Both contexts, from course and category, for permissions later.
 $context = context_course::instance($course->id);
+
 // URL for current page.
 $url = new moodle_url("/mod/emarking/reports/cycle.php", array(
-		"course" => $course->id));
-// URL for adding a new print order.
+		"course" => $course->id, "emarking" => $emarkingid));
+
 $PAGE->set_url($url);
 $PAGE->set_context($context);
 $PAGE->set_course($course);
@@ -54,10 +66,62 @@ $PAGE->set_title(get_string("emarking", "mod_emarking"));
 $PAGE->set_pagelayout("incourse");
 $PAGE->navbar->add(get_string("cycle", "mod_emarking"));
 
-$formparameters = array($USER->id);
+$formparameters = array($USER->id, $courseid);
+$addform = new cycle_form(null, $formparameters);
+
 	echo $OUTPUT->header();
 
-	$addform = new cycle_form(null, $formparameters);
+	$out = html_writer::div('<h2>'.get_string('filters', 'mod_emarking').'</h2>');
+	echo $out;
+
 	$addform->display();
 	
+	$datas = $addform->get_data();
+	
+	if($datas || $selectedcategory != "NULL" && $selectedcourse != "NULL" && $selectedsection > -1){
+		if($datas){
+			$selectedcourse = $datas->courses;
+			$selectedsection = $datas->section;
+			$selectedcategory = $datas->category;
+		}
+		$getemarkingssql = 'SELECT ee.id AS id,
+				ee.name AS name
+				FROM {emarking_exams} AS ee
+				INNER JOIN {course} AS c ON (ee.course = c.id AND c.shortname LIKE "%'.$selectedcourse.'-'.$selectedsection.'%")
+				INNER JOIN {course_categories} AS cc ON (c.category = cc.id AND cc.name = "'.$selectedcategory.'")';
+		
+		$getemarkings = $DB->get_records_sql($getemarkingssql);
+		
+		$emarkingtabs = array();
+		
+		$emarkingtabs[] = new tabobject('Resumen',
+						  new moodle_url("/mod/emarking/reports/cycle.php", array(
+								"course" => $course->id, "emarking" => 0,
+						  		"selectedcourse" => $selectedcourse, "selectedsection" => $selectedsection,
+						  		"selectedcategory" => $selectedcategory
+						  )),
+						  'Resumen');
+		
+		foreach($getemarkings as $emarkings){
+		
+			$emarkingtabs[] = new tabobject($emarkings->name,
+							  new moodle_url("/mod/emarking/reports/cycle.php", array(
+									"course" => $course->id, "emarking" => $emarkings->id,
+							  		"selectedcourse" => $selectedcourse, "selectedsection" => $selectedsection,
+							  		"selectedcategory" => $selectedcategory
+							  )),
+							  $emarkings->name);			
+		}
+
+		echo $OUTPUT->tabtree($emarkingtabs, get_string('examdetails','mod_emarking'));
+	}
+
+
+
+	
 	echo $OUTPUT->footer();
+	
+	
+	
+	
+	
