@@ -42,32 +42,39 @@ class cycle_form extends moodleform {
 				INNER JOIN {role_assignments} ra ON (ra.userid = u.id AND u.id=?)
 				INNER JOIN {context} ct ON (ct.id = ra.contextid)
 				INNER JOIN {course} c ON (c.id = ct.instanceid)
-				INNER JOIN mdl_course_categories cc ON (cc.id = c.category)
+				INNER JOIN {course_categories} cc ON (cc.id = c.category)
 				INNER JOIN {role} r ON (r.id = ra.roleid AND r.shortname IN ('teacher', 'editingteacher'))";
 		
 		$teachercourses = $DB->get_records_sql($teachercoursessql, array($userid));
 		
 		$categories = array();
-		$courses = array();
+		$shortname = array();
+		$courseparameters = array();
+		$sections = array();
 		
 		foreach($teachercourses as $coursedata){
 			$categories[] = $coursedata->category_name;
-			$courses[] = $coursedata->course_name;
+			//$courses[] = $coursedata->course_name;
+			$courseparameters[] = array(explode('-', $coursedata->course_name), $coursedata->course_id);
+			foreach($courseparameters as $key => $parameters){
+				$sections[] = $parameters[0][3];
+				$shortname[] = $parameters[0][2];
+				//var_dump($parameters);
+			}
 		}
-		$uniquecategories = array_unique($categories);
-		$uniquecourses = array_unique($courses);
-		//var_dump($teachercourses);
-		
-		$var = array('alo?', 'alo si?', 'si con el');	
+		var_dump($courseparameters);
+		$categories = array_unique($categories);
+		$courses = array_unique($shortname);
+		$sections = array_unique($sections);
 		
 		$out = html_writer::div('<h2>'.get_string('filters','mod_emarking').'</h2>');
 		echo $out;
 		
-		$mform->addElement('select', 'category', get_string('category','mod_emarking'), $uniquecategories);
+		$mform->addElement('select', 'category', get_string('category','mod_emarking'), $categories);
 		
 		$mform->addElement('select', 'course', get_string('course','mod_emarking'), $courses);
 		
-		$mform->addElement('select', 'section', get_string('section','mod_emarking'), $var);
+		$mform->addElement('select', 'section', get_string('section','mod_emarking'), $sections);
 		
 	}
 }

@@ -54,9 +54,6 @@ $PAGE->set_title(get_string("emarking", "mod_emarking"));
 $PAGE->set_pagelayout("incourse");
 $PAGE->navbar->add(get_string("cycle", "mod_emarking"));
 
-// $PAGE->navbar->add("CURSO");
-// $PAGE->navbar->add("topoyiyo");
-// $PAGE->navbar->add("upload");
 $formparameters = array($USER->id);
 	echo $OUTPUT->header();
 
