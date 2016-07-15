@@ -880,3 +880,41 @@ function emarking_time_progression($course, $fortable = null){
 		return 0;
 	}
 }
+function emarking_cycle_tabs($selectedcourse, $selectedsection, $selectedcategory, $course){
+	global $DB;
+
+	$getemarkingssql = 'SELECT ee.id AS id,
+				ee.name AS name
+				FROM {emarking_exams} AS ee
+				INNER JOIN {course} AS c ON (ee.course = c.id AND c.shortname LIKE "%'.$selectedcourse.'-'.$selectedsection.'%")
+				INNER JOIN {course_categories} AS cc ON (c.category = cc.id AND cc.name = "'.$selectedcategory.'")';
+
+	$getemarkings = $DB->get_records_sql($getemarkingssql);
+
+	$emarkingtabs = array();
+
+	$emarkingtabs[] = new tabobject(0,
+			new moodle_url("/mod/emarking/reports/cycle.php", array(
+					"course" => $course->id, "emarking" => 0,
+					"selectedcourse" => $selectedcourse, "selectedsection" => $selectedsection,
+					"selectedcategory" => $selectedcategory,
+					"currenttab" => 0
+			)),
+			get_string('summary', 'mod_emarking'));
+
+	$tabid = 1;
+	foreach($getemarkings as $emarkings){
+
+		$emarkingtabs[] = new tabobject($tabid,
+				new moodle_url("/mod/emarking/reports/cycle.php", array(
+						"course" => $course->id, "emarking" => $emarkings->id,
+						"selectedcourse" => $selectedcourse, "selectedsection" => $selectedsection,
+						"selectedcategory" => $selectedcategory,
+						"currenttab" => $tabid
+				)),
+				$emarkings->name);
+
+		$tabid = $tabid + 1;
+	}
+	return $emarkingtabs;
+}

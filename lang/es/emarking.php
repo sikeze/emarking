@@ -757,3 +757,4 @@ $string['cycle'] = 'Ciclo';
 $string['course'] = 'Curso';
 $string['section'] = 'Sección';
 $string['filters'] = 'Filtros';
+$string['summary'] = 'Resumen';
