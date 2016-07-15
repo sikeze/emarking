@@ -747,4 +747,5 @@ $string ['yourmarking'] = 'Your marking';
 $string['cycle'] = 'Cycle';
 $string['course'] = 'Course';
 $string['section'] = 'Section';
+$string['summary'] = 'Summary';
 $string['filters'] = 'Filters';

@@ -37,7 +37,7 @@ $emarkingid = optional_param("eid", -1, PARAM_INT);
 $selectedcategory = optional_param("selectedcategory", "NULL", PARAM_TEXT);
 $selectedcourse = optional_param("selectedcourse", "NULL", PARAM_TEXT);
 $selectedsection = optional_param("selectedsection", -1, PARAM_INT);
-
+$currenttab = optional_param("currenttab", 0, PARAM_INT);
 
 // First check that the user is logged in.
 require_login();
@@ -84,36 +84,9 @@ $addform = new cycle_form(null, $formparameters);
 			$selectedsection = $datas->section;
 			$selectedcategory = $datas->category;
 		}
-		$getemarkingssql = 'SELECT ee.id AS id,
-				ee.name AS name
-				FROM {emarking_exams} AS ee
-				INNER JOIN {course} AS c ON (ee.course = c.id AND c.shortname LIKE "%'.$selectedcourse.'-'.$selectedsection.'%")
-				INNER JOIN {course_categories} AS cc ON (c.category = cc.id AND cc.name = "'.$selectedcategory.'")';
-		
-		$getemarkings = $DB->get_records_sql($getemarkingssql);
-		
-		$emarkingtabs = array();
-		
-		$emarkingtabs[] = new tabobject('Resumen',
-						  new moodle_url("/mod/emarking/reports/cycle.php", array(
-								"course" => $course->id, "emarking" => 0,
-						  		"selectedcourse" => $selectedcourse, "selectedsection" => $selectedsection,
-						  		"selectedcategory" => $selectedcategory
-						  )),
-						  'Resumen');
-		
-		foreach($getemarkings as $emarkings){
-		
-			$emarkingtabs[] = new tabobject($emarkings->name,
-							  new moodle_url("/mod/emarking/reports/cycle.php", array(
-									"course" => $course->id, "emarking" => $emarkings->id,
-							  		"selectedcourse" => $selectedcourse, "selectedsection" => $selectedsection,
-							  		"selectedcategory" => $selectedcategory
-							  )),
-							  $emarkings->name);			
-		}
+		$emarkingtabs = emarking_cycle_tabs($selectedcourse, $selectedsection, $selectedcategory, $course);
+		echo $OUTPUT->tabtree($emarkingtabs, $currenttab);
 
-		echo $OUTPUT->tabtree($emarkingtabs, get_string('examdetails','mod_emarking'));
 	}
 
 
