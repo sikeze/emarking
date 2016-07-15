@@ -645,3 +645,238 @@ function emarking_array_by_date($isyears, $queryresult, $secondarraytitle, $quer
 	}
 	return $array;
 }
+/**
+ * EMarking time progression
+ *
+ * @param array $emarkingid
+ *            The emarking ids
+ * @return multitype: array 
+ */
+function emarking_time_progression($course, $fortable = null){
+	global $DB;
+	$sqlemarking = "SELECT e.id AS id, e.name as name, eexam.timecreated AS printorder, eexam.printdate AS printdate, MIN(d.timecreated) AS digitalized,
+							MIN(d.timecorrectionstarted) AS correctionstarted, MAX(d.timecorrectionended) AS corrected, MIN(d.timefirstpublished) AS firstpublished,
+							MIN(d.timeregradingstarted) AS regradingstarted, MAX(d.timeregradingended) AS regraded, MAX(d.timelastpublished) AS lastpublished
+							FROM mdl_emarking_exams AS eexam
+                            INNER JOIN mdl_emarking AS e ON (e.id = eexam.emarking)
+							LEFT JOIN mdl_emarking_draft AS d ON (e.id = d.emarkingid)
+							WHERE e.course= ?
+							GROUP BY e.id";
+	// Gets the information of the above query.
+	if ($emarkings = $DB->get_records_sql($sqlemarking,array($course))) {
+		$position=0;
+		if($fortable == 1){
+			$emarkingarray[0] =['EMarking name','Dias enviado a imprimir','Dias impreso','Dias digitalizado','Dias en correccion','Dias corregido','Dias publicado','Dias en recorreccion','Dias recorregido','Dias publicacion final','Dias totales'];
+			$position++;
+		}
+			foreach($emarkings as $emarking){
+				if($emarking->printdate == 0){
+					$status = 1;
+				}elseif(is_null($emarking->digitalized)){
+					$status = 2;
+					
+				}elseif(is_null($emarking->correctionstarted)){
+					$status = 3;
+					
+				}elseif(is_null($emarking->corrected)){
+					$status = 4;
+					
+				}elseif(is_null($emarking->firstpublished)){
+					$status = 5;
+					
+				}elseif(is_null($emarking->regradingstarted)){
+					$status = 6;
+					
+				}elseif(is_null($emarking->regraded)){
+					$status = 7;
+					
+				}elseif(is_null($emarking->lastpublished) || $emarking->lastpublished < $emarking->regraded){
+					$status = 8;
+					
+				}elseif((round((time()- $emarking->lastpublished)/86400)) >2){
+					$status = 9;
+				}else{
+					$status = 10;
+				}
+				
+				switch ($status) {
+					
+					case 1:
+						$emarkingarray[$position]= array(
+							$emarking->name,
+							(round((time() - $emarking->printorder)/86400)),
+							0,0,0,0,0,0,0,0,0,
+							(round((time() - $emarking->printorder)/86400))." Days");
+						if($fortable == 1){
+							$emarkingarray[$position][11] = (round((time() - $emarking->printorder)/86400));
+							unset($emarkingarray[$position][10]);
+						}
+						$position++;
+						break;
+						
+					case 2:
+						$emarkingarray[$position]= array(
+								(round(($emarking->printdate - $emarking->printorder)/86400)),
+								(round((time() - $emarking->printdate)/86400)),
+								0,0,0,0,0,0,0,0,
+								(round((time() - $emarking->printorder)/86400))." Days");
+						if($fortable == 1){
+							$emarkingarray[$position][11] = (round((time() - $emarking->printorder)/86400));
+							unset($emarkingarray[$position][10]);
+						}
+						$position++;
+						break;
+						
+					case 3:
+						$emarkingarray[$position]= array(
+								$emarking->name,
+								(round(($emarking->printdate - $emarking->printorder)/86400)),
+								(round(($emarking->digitalized - $emarking->printdate)/86400)),
+								(round((time() - $emarking->digitalized)/86400)),
+								0,0,0,0,0,0,0,
+								(round((time() - $emarking->printorder)/86400))." Days");
+						if($fortable == 1){
+							$emarkingarray[$position][11] = (round((time() - $emarking->printorder)/86400));
+							unset($emarkingarray[$position][10]);
+						}
+						$position++;
+						break;
+						
+					case 4:
+						$emarkingarray[$position]= array(
+								$emarking->name,
+								(round(($emarking->printdate - $emarking->printorder)/86400)),
+								(round(($emarking->digitalized - $emarking->printdate)/86400)),
+								(round(($emarking->correctionstarted - $emarking->digitalized)/86400)),
+								(round((time() - $emarking->correctionstarted)/86400)),
+								0,0,0,0,0,0,
+								(round((time() - $emarking->printorder)/86400))." Days");
+						if($fortable == 1){
+							$emarkingarray[$position][11] = (round((time() - $emarking->printorder)/86400));
+							unset($emarkingarray[$position][10]);
+						}
+						$position++;
+						break;
+						
+					case 5:
+						$emarkingarray[$position]= array(
+								$emarking->name,
+								(round(($emarking->printdate - $emarking->printorder)/86400)),
+								(round(($emarking->digitalized - $emarking->printdate)/86400)),
+								(round(($emarking->correctionstarted - $emarking->digitalized)/86400)),
+								(round(($emarking->corrected - $emarking->correctionstarted)/86400)),
+								(round((time() - $emarking->corrected)/86400)),
+								0,0,0,0,0,
+								(round((time() - $emarking->printorder)/86400))." Days");
+						if($fortable == 1){
+							$emarkingarray[$position][11] = (round((time() - $emarking->printorder)/86400));
+							unset($emarkingarray[$position][10]);
+						}
+						$position++;
+						break;
+						
+					case 6:
+						$emarkingarray[$position]= array(
+								$emarking->name,
+								(round(($emarking->printdate - $emarking->printorder)/86400)),
+								(round(($emarking->digitalized - $emarking->printdate)/86400)),
+								(round(($emarking->correctionstarted - $emarking->digitalized)/86400)),
+								(round(($emarking->corrected - $emarking->correctionstarted)/86400)),
+								(round(($emarking->firstpublished - $emarking->corrected)/86400)),
+								(round((time() - $emarking->firstpublished)/86400)),
+								0,0,0,0,
+								(round((time() - $emarking->printorder)/86400))." Days");
+						if($fortable == 1){
+							$emarkingarray[$position][11] = (round((time() - $emarking->printorder)/86400));
+							unset($emarkingarray[$position][10]);
+						}
+						$position++;
+						break;
+						
+					case 7:
+						$emarkingarray[$position]= array(
+								$emarking->name,
+								(round(($emarking->printdate - $emarking->printorder)/86400)),
+								(round(($emarking->digitalized - $emarking->printdate)/86400)),
+								(round(($emarking->correctionstarted - $emarking->digitalized)/86400)),
+								(round(($emarking->corrected - $emarking->correctionstarted)/86400)),
+								(round(($emarking->firstpublished - $emarking->corrected)/86400)),
+								(round(($emarking->regradingstarted - $emarking->firstpublished)/86400)),
+								(round((time() - $emarking->regradingstarted)/86400)),
+								0,0,0,
+								(round((time() - $emarking->printorder)/86400))." Days");
+						if($fortable == 1){
+							$emarkingarray[$position][11] = (round((time() - $emarking->printorder)/86400));
+							unset($emarkingarray[$position][10]);
+						}
+						$position++;
+						break;
+						
+					case 8:
+						$emarkingarray[$position]= array(
+								$emarking->name,
+								(round(($emarking->printdate - $emarking->printorder)/86400)),
+								(round(($emarking->digitalized - $emarking->printdate)/86400)),
+								(round(($emarking->correctionstarted - $emarking->digitalized)/86400)),
+								(round(($emarking->corrected - $emarking->correctionstarted)/86400)),
+								(round(($emarking->firstpublished - $emarking->corrected)/86400)),
+								(round(($emarking->regradingstarted - $emarking->firstpublished)/86400)),
+								(round(($emarking->regraded - $emarking->regradingstarted)/86400)),
+								(round((time() - $emarking->regraded)/86400)),
+								0,0,
+								(round((time() - $emarking->printorder)/86400))." Days");
+						if($fortable == 1){
+							$emarkingarray[$position][11] = (round((time() - $emarking->printorder)/86400));
+							unset($emarkingarray[$position][10]);
+						}
+						$position++;
+						break;
+						
+					case 9:
+						$emarkingarray[$position]= array(
+								$emarking->name,
+								(round(($emarking->printdate - $emarking->printorder)/86400)),
+								(round(($emarking->digitalized - $emarking->printdate)/86400)),
+								(round(($emarking->correctionstarted - $emarking->digitalized)/86400)),
+								(round(($emarking->corrected - $emarking->correctionstarted)/86400)),
+								(round(($emarking->firstpublished - $emarking->corrected)/86400)),
+								(round(($emarking->regradingstarted - $emarking->firstpublished)/86400)),
+								(round(($emarking->regraded - $emarking->regradingstarted)/86400)),
+								(round(($emarking->lastpublished - $emarking->regraded)/86400)),
+								2,
+								0,
+								(round((time() - $emarking->printorder)/86400))." Days");
+						if($fortable == 1){
+							$emarkingarray[$position][11] = (round((time() - $emarking->printorder)/86400));
+							unset($emarkingarray[$position][10]);
+						}
+						$position++;
+						break;
+						
+					case 10:
+						$emarkingarray[$position]= array(
+								$emarking->name,
+								(round(($emarking->printdate - $emarking->printorder)/86400)),
+								(round(($emarking->digitalized - $emarking->printdate)/86400)),
+								(round(($emarking->correctionstarted - $emarking->digitalized)/86400)),
+								(round(($emarking->corrected - $emarking->correctionstarted)/86400)),
+								(round(($emarking->firstpublished - $emarking->corrected)/86400)),
+								(round(($emarking->regradingstarted - $emarking->firstpublished)/86400)),
+								(round(($emarking->regraded - $emarking->regradingstarted)/86400)),
+								(round(($emarking->lastpublished - $emarking->regraded)/86400)),
+								(round((time()- $emarking->lastpublished)/86400)),
+								0,
+								(round((time() - $emarking->printorder)/86400))." Days");
+						if($fortable == 1){
+							$emarkingarray[$position][11] = (round((time() - $emarking->printorder)/86400));
+							unset($emarkingarray[$position][10]);
+						}
+						$position++;
+						break;
+				}
+			}
+			return $emarkingarray;
+	}else{
+		return 0;
+	}
+}
