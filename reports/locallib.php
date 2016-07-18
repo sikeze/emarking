@@ -654,6 +654,14 @@ function emarking_array_by_date($isyears, $queryresult, $secondarraytitle, $quer
  */
 function emarking_time_progression($course, $fortable = null){
 	global $DB;
+	// EMarking cycle
+	define('EMARKING__SENT_TO_PRINT',0);
+	define('EMARKING__PRINTED',5);
+	define('EMARKING_STATUS_GRADED',18);
+	define('EMARKING_STATUS_FINAL_PUBLISHED',45);
+	define('EMARKING_STATUS_2DAYS_PUBLISHED',50);
+	
+	
 	$sqlemarking = "SELECT e.id AS id, e.name as name, eexam.timecreated AS printorder, eexam.printdate AS printdate, MIN(d.timecreated) AS digitalized,
 							MIN(d.timecorrectionstarted) AS correctionstarted, MAX(d.timecorrectionended) AS corrected, MIN(d.timefirstpublished) AS firstpublished,
 							MIN(d.timeregradingstarted) AS regradingstarted, MAX(d.timeregradingended) AS regraded, MAX(d.timelastpublished) AS lastpublished
@@ -671,37 +679,38 @@ function emarking_time_progression($course, $fortable = null){
 		}
 			foreach($emarkings as $emarking){
 				if($emarking->printdate == 0){
-					$status = 1;
+					$status = EMARKING__SENT_TO_PRINT;
+					
 				}elseif(is_null($emarking->digitalized)){
-					$status = 2;
+					$status = EMARKING__PRINTED;
 					
 				}elseif(is_null($emarking->correctionstarted)){
-					$status = 3;
+					$status = EMARKING_STATUS_SUBMITTED;
 					
 				}elseif(is_null($emarking->corrected)){
-					$status = 4;
+					$status = EMARKING_STATUS_GRADING;
 					
 				}elseif(is_null($emarking->firstpublished)){
-					$status = 5;
+					$status = EMARKING_STATUS_GRADED;
 					
 				}elseif(is_null($emarking->regradingstarted)){
-					$status = 6;
+					$status = EMARKING_STATUS_PUBLISHED;
 					
 				}elseif(is_null($emarking->regraded)){
-					$status = 7;
+					$status = EMARKING_STATUS_REGRADING;
 					
 				}elseif(is_null($emarking->lastpublished) || $emarking->lastpublished < $emarking->regraded){
-					$status = 8;
+					$status = EMARKING_STATUS_REGRADING_RESPONDED;
 					
 				}elseif((round((time()- $emarking->lastpublished)/86400)) >2){
-					$status = 9;
+					$status = EMARKING_STATUS_2DAYS_PUBLISHED;
 				}else{
-					$status = 10;
+					$status = EMARKING_STATUS_FINAL_PUBLISHED;
 				}
 				
 				switch ($status) {
 					
-					case 1:
+					case EMARKING__SENT_TO_PRINT:
 						$emarkingarray[$position]= array(
 							$emarking->name,
 							(round((time() - $emarking->printorder)/86400)),
@@ -714,7 +723,7 @@ function emarking_time_progression($course, $fortable = null){
 						$position++;
 						break;
 						
-					case 2:
+					case EMARKING__PRINTED:
 						$emarkingarray[$position]= array(
 								(round(($emarking->printdate - $emarking->printorder)/86400)),
 								(round((time() - $emarking->printdate)/86400)),
@@ -727,7 +736,7 @@ function emarking_time_progression($course, $fortable = null){
 						$position++;
 						break;
 						
-					case 3:
+					case EMARKING_STATUS_SUBMITTED:
 						$emarkingarray[$position]= array(
 								$emarking->name,
 								(round(($emarking->printdate - $emarking->printorder)/86400)),
@@ -742,7 +751,7 @@ function emarking_time_progression($course, $fortable = null){
 						$position++;
 						break;
 						
-					case 4:
+					case EMARKING_STATUS_GRADING:
 						$emarkingarray[$position]= array(
 								$emarking->name,
 								(round(($emarking->printdate - $emarking->printorder)/86400)),
@@ -758,7 +767,7 @@ function emarking_time_progression($course, $fortable = null){
 						$position++;
 						break;
 						
-					case 5:
+					case EMARKING_STATUS_GRADED:
 						$emarkingarray[$position]= array(
 								$emarking->name,
 								(round(($emarking->printdate - $emarking->printorder)/86400)),
@@ -775,7 +784,7 @@ function emarking_time_progression($course, $fortable = null){
 						$position++;
 						break;
 						
-					case 6:
+					case EMARKING_STATUS_PUBLISHED:
 						$emarkingarray[$position]= array(
 								$emarking->name,
 								(round(($emarking->printdate - $emarking->printorder)/86400)),
@@ -793,7 +802,7 @@ function emarking_time_progression($course, $fortable = null){
 						$position++;
 						break;
 						
-					case 7:
+					case EMARKING_STATUS_REGRADING:
 						$emarkingarray[$position]= array(
 								$emarking->name,
 								(round(($emarking->printdate - $emarking->printorder)/86400)),
@@ -812,7 +821,7 @@ function emarking_time_progression($course, $fortable = null){
 						$position++;
 						break;
 						
-					case 8:
+					case EMARKING_STATUS_REGRADING_RESPONDED:
 						$emarkingarray[$position]= array(
 								$emarking->name,
 								(round(($emarking->printdate - $emarking->printorder)/86400)),
@@ -832,7 +841,28 @@ function emarking_time_progression($course, $fortable = null){
 						$position++;
 						break;
 						
-					case 9:
+					case EMARKING_STATUS_FINAL_PUBLISHED:
+						$emarkingarray[$position]= array(
+						$emarking->name,
+						(round(($emarking->printdate - $emarking->printorder)/86400)),
+						(round(($emarking->digitalized - $emarking->printdate)/86400)),
+						(round(($emarking->correctionstarted - $emarking->digitalized)/86400)),
+						(round(($emarking->corrected - $emarking->correctionstarted)/86400)),
+						(round(($emarking->firstpublished - $emarking->corrected)/86400)),
+						(round(($emarking->regradingstarted - $emarking->firstpublished)/86400)),
+						(round(($emarking->regraded - $emarking->regradingstarted)/86400)),
+						(round(($emarking->lastpublished - $emarking->regraded)/86400)),
+						(round((time()- $emarking->lastpublished)/86400)),
+						0,
+						(round((time() - $emarking->printorder)/86400))." Days");
+						if($fortable == 1){
+							$emarkingarray[$position][11] = (round((time() - $emarking->printorder)/86400));
+							unset($emarkingarray[$position][10]);
+						}
+						$position++;
+						break;
+						
+					case EMARKING_STATUS_2DAYS_PUBLISHED:
 						$emarkingarray[$position]= array(
 								$emarking->name,
 								(round(($emarking->printdate - $emarking->printorder)/86400)),
@@ -852,27 +882,7 @@ function emarking_time_progression($course, $fortable = null){
 						}
 						$position++;
 						break;
-						
-					case 10:
-						$emarkingarray[$position]= array(
-								$emarking->name,
-								(round(($emarking->printdate - $emarking->printorder)/86400)),
-								(round(($emarking->digitalized - $emarking->printdate)/86400)),
-								(round(($emarking->correctionstarted - $emarking->digitalized)/86400)),
-								(round(($emarking->corrected - $emarking->correctionstarted)/86400)),
-								(round(($emarking->firstpublished - $emarking->corrected)/86400)),
-								(round(($emarking->regradingstarted - $emarking->firstpublished)/86400)),
-								(round(($emarking->regraded - $emarking->regradingstarted)/86400)),
-								(round(($emarking->lastpublished - $emarking->regraded)/86400)),
-								(round((time()- $emarking->lastpublished)/86400)),
-								0,
-								(round((time() - $emarking->printorder)/86400))." Days");
-						if($fortable == 1){
-							$emarkingarray[$position][11] = (round((time() - $emarking->printorder)/86400));
-							unset($emarkingarray[$position][10]);
-						}
-						$position++;
-						break;
+
 				}
 			}
 			return $emarkingarray;

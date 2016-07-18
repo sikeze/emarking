@@ -27,6 +27,7 @@
 require_once(dirname(dirname(dirname(dirname(__FILE__)))) . "/config.php");
 require_once($CFG->dirroot . "/mod/emarking/locallib.php");
 require_once($CFG->dirroot . "/mod/emarking/reports/locallib.php");
+require_once($CFG->dirroot . "/mod/emarking/lib.php");
 global $DB, $USER, $CFG, $OUTPUT;
 // Course id, if the user comes from a course.
 $courseid = required_param("course", PARAM_INT);
