@@ -56,6 +56,12 @@ $PAGE->set_title(get_string("emarking", "mod_emarking"));
 $PAGE->set_pagelayout("incourse");
 $PAGE->navbar->add(get_string("cycle", "mod_emarking"));
 
+define('EMARKING_TO_PRINT',0);
+define('EMARKING_PRINTED',5);
+define('EMARKING_STATUS_GRADED',18);
+define('EMARKING_STATUS_FINAL_PUBLISHED',45);
+define('EMARKING_STATUS_2DAYS_PUBLISHED',50);
+
 echo $OUTPUT->header();
 
 echo html_writer::tag('div','', array('id' => 'summarychart','style' => 'height: 600px;'));

@@ -654,14 +654,7 @@ function emarking_array_by_date($isyears, $queryresult, $secondarraytitle, $quer
  */
 function emarking_time_progression($course, $fortable = null){
 	global $DB;
-	// EMarking cycle
-	define('EMARKING__SENT_TO_PRINT',0);
-	define('EMARKING__PRINTED',5);
-	define('EMARKING_STATUS_GRADED',18);
-	define('EMARKING_STATUS_FINAL_PUBLISHED',45);
-	define('EMARKING_STATUS_2DAYS_PUBLISHED',50);
-	
-	
+	// EMarking cycle	
 	$sqlemarking = "SELECT e.id AS id, e.name as name, eexam.timecreated AS printorder, eexam.printdate AS printdate, MIN(d.timecreated) AS digitalized,
 							MIN(d.timecorrectionstarted) AS correctionstarted, MAX(d.timecorrectionended) AS corrected, MIN(d.timefirstpublished) AS firstpublished,
 							MIN(d.timeregradingstarted) AS regradingstarted, MAX(d.timeregradingended) AS regraded, MAX(d.timelastpublished) AS lastpublished
@@ -679,10 +672,10 @@ function emarking_time_progression($course, $fortable = null){
 		}
 			foreach($emarkings as $emarking){
 				if($emarking->printdate == 0){
-					$status = EMARKING__SENT_TO_PRINT;
+					$status = EMARKING_TO_PRINT;
 					
 				}elseif(is_null($emarking->digitalized)){
-					$status = EMARKING__PRINTED;
+					$status = EMARKING_PRINTED;
 					
 				}elseif(is_null($emarking->correctionstarted)){
 					$status = EMARKING_STATUS_SUBMITTED;
@@ -710,7 +703,7 @@ function emarking_time_progression($course, $fortable = null){
 				
 				switch ($status) {
 					
-					case EMARKING__SENT_TO_PRINT:
+					case EMARKING_TO_PRINT:
 						$emarkingarray[$position]= array(
 							$emarking->name,
 							(round((time() - $emarking->printorder)/86400)),
@@ -723,7 +716,7 @@ function emarking_time_progression($course, $fortable = null){
 						$position++;
 						break;
 						
-					case EMARKING__PRINTED:
+					case EMARKING_PRINTED:
 						$emarkingarray[$position]= array(
 								(round(($emarking->printdate - $emarking->printorder)/86400)),
 								(round((time() - $emarking->printdate)/86400)),
