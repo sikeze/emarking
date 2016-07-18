@@ -29,7 +29,7 @@ require_once($CFG->dirroot . "/mod/emarking/locallib.php");
 require_once(dirname(__FILE__) . '/locallib.php');
 require_once(dirname(__FILE__) . '/forms/cycle_form.php');
 
-global $DB, $USER, $CFG, $OUTPUT;
+global $DB, $USER, $CFG, $OUTPUT, $COURSE;
 
 // Course id, if the user comes from a course.
 $courseid = required_param("course", PARAM_INT);
@@ -69,7 +69,17 @@ $PAGE->navbar->add(get_string("cycle", "mod_emarking"));
 $formparameters = array($USER->id, $courseid);
 $addform = new cycle_form(null, $formparameters);
 
-	echo $OUTPUT->header();
+
+echo $OUTPUT->header();
+	// data of the current course
+	$currentcategory = $DB-> get_record('course_categories', array('id' => $COURSE->category), 'name');
+	$curretcourse = explode('-', $COURSE->shortname);
+	
+	if($selectedcategory == "NULL" && $selectedcourse == "NULL" && $selectedsection == -1){
+		$selectedcategory = $currentcategory->name;
+		$selectedcourse = $curretcourse[2];
+		$selectedsection = $curretcourse[3];
+	}
 
 	$out = html_writer::div('<h2>'.get_string('filters', 'mod_emarking').'</h2>');
 	echo $out;
@@ -86,15 +96,58 @@ $addform = new cycle_form(null, $formparameters);
 		}
 		$emarkingtabs = emarking_cycle_tabs($selectedcourse, $selectedsection, $selectedcategory, $course);
 		echo $OUTPUT->tabtree($emarkingtabs, $currenttab);
-
 	}
 
-
-
-	
-	echo $OUTPUT->footer();
-	
-	
-	
-	
-	
+  	if($currenttab == 0){
+  		define('EMARKING_TO_PRINT',0);
+  		define('EMARKING_PRINTED',5);
+  		define('EMARKING_STATUS_GRADED',18);
+  		define('EMARKING_STATUS_FINAL_PUBLISHED',45);
+  		define('EMARKING_STATUS_2DAYS_PUBLISHED',50);
+  		
+  		echo html_writer::tag('div','', array('id' => 'summarychart','style' => 'height: 600px;'));
+  		$chartdata= json_encode(emarking_time_progression($course->id),null);
+  		echo emarking_table_creator(null,emarking_time_progression($course->id,1),null);
+  	}
+echo $OUTPUT->footer();
+  		
+?>
+  		<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+  		<script type="text/javascript">
+  		google.load("visualization", "1", {packages: ['corechart', 'bar']});
+  		google.setOnLoadCallback(drawStacked);
+  		
+  		function drawStacked() {
+  		
+  		      var data = new google.visualization.DataTable();
+  		      data.addColumn('string', 'Nombre Prueba');
+  		      data.addColumn('number', 'Días enviado a imprimir');
+  		      data.addColumn('number', 'Días impreso');
+  		      data.addColumn('number', 'Días digitalizado');
+  		      data.addColumn('number', 'Días en conrreccion');
+  		      data.addColumn('number', 'Días corregido');
+  		      data.addColumn('number', 'Días publicado');
+  		      data.addColumn('number', 'Días en recorreccion');
+  		      data.addColumn('number', 'Días recorregido');
+  		      data.addColumn('number', 'Días en publicacion final');
+  		      data.addColumn('number', 'Días total(comentario)');
+  		      data.addColumn({type: 'string', role: 'annotation'});
+  			  data.addRows(<?php echo $chartdata; ?>);
+  			  var view = new google.visualization.DataView(data);
+  			  view.setColumns([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+  		      var options = {
+  		        title: '<?php echo get_string("emarkingsummary", "mod_emarking");?>',
+  		        chartArea: {width: '50%'},
+  		        isStacked: true,
+  		        hAxis: {
+  		          title: '<?php echo get_string("days", "mod_emarking");?>',
+  		          viewWindow: {min: 0},
+  		        },
+  		        vAxis: {
+  		          title: 'EMarking'
+  		        }
+  		      };
+  		      var chart = new google.visualization.BarChart(document.getElementById('summarychart'));
+  		      chart.draw(view, options);
+  		    }
+  		</script>
