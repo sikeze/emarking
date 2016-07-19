@@ -84,7 +84,7 @@ class cycle_form extends moodleform {
 		$mform->addElement("hidden", "course", $cid);
 		$mform->setType( "course", PARAM_INT);
 		
-		$this->add_action_buttons(false);
+		$this->add_action_buttons(false, get_string('search', 'mod_emarking'));
 		
 	}
 }

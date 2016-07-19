@@ -15,15 +15,16 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- *
- * @param unknown $divid
- * @param array $labels
- * @param array $data
- * @param unknown $title
- * @param string $xtitle
- * @param string $ytitle
- * @return multitype:string
- */
+* 
+*
+* It can be reached from a block within a category or from an EMarking
+* course module
+*
+* @package mod
+* @subpackage emarking
+* @copyright 2016 Benjamin Espinosa (beespinosa94@gmail.com)
+* @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+*/
 function emarking_get_google_chart($divid, array $labels, array $data, $title, $xtitle = null, $ytitle = null) {
     // DIV for displaying.
     $html = '<div id="' . $divid . '" style="width: 100%; height: 500px;"></div>';
@@ -667,7 +668,12 @@ function emarking_time_progression($course, $fortable = null){
 	if ($emarkings = $DB->get_records_sql($sqlemarking,array($course))) {
 		$position=0;
 		if($fortable == 1){
-			$emarkingarray[0] =['EMarking name','Dias enviado a imprimir','Dias impreso','Dias digitalizado','Dias en correccion','Dias corregido','Dias publicado','Dias en recorreccion','Dias recorregido','Dias publicacion final','Dias totales'];
+			$emarkingarray[0] =[get_string('emarkingname', 'mod_emarking'),get_string('dayssenttoprint', 'mod_emarking'),
+					get_string('printeddays', 'mod_emarking'),get_string('digitalizeddays', 'mod_emarking'),
+					get_string('daysincorrection', 'mod_emarking'),get_string('gradeddays', 'mod_emarking'),
+					get_string('publisheddays', 'mod_emarking'),get_string('daysinregrading', 'mod_emarking'),
+					get_string('gradeddays', 'mod_emarking'),get_string('finalpublicationdays', 'mod_emarking'),
+					get_string('totaldays', 'mod_emarking')];
 			$position++;
 		}
 			foreach($emarkings as $emarking){
