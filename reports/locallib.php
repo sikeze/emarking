@@ -658,7 +658,8 @@ function emarking_time_progression($course, $fortable = null){
 	// EMarking cycle	
 	$sqlemarking = "SELECT e.id AS id, e.name as name, eexam.timecreated AS printorder, eexam.printdate AS printdate, MIN(d.timecreated) AS digitalized,
 							MIN(d.timecorrectionstarted) AS correctionstarted, MAX(d.timecorrectionended) AS corrected, MIN(d.timefirstpublished) AS firstpublished,
-							MIN(d.timeregradingstarted) AS regradingstarted, MAX(d.timeregradingended) AS regraded, MAX(d.timelastpublished) AS lastpublished
+							MIN(d.timeregradingstarted) AS regradingstarted, MAX(d.timeregradingended) AS regraded, MAX(d.timelastpublished) AS lastpublished, 
+							d.status as status
 							FROM mdl_emarking_exams AS eexam
                             INNER JOIN mdl_emarking AS e ON (e.id = eexam.emarking)
 							LEFT JOIN mdl_emarking_draft AS d ON (e.id = d.emarkingid)
@@ -677,34 +678,52 @@ function emarking_time_progression($course, $fortable = null){
 			$position++;
 		}
 			foreach($emarkings as $emarking){
+				$cmdst = get_coursemodule_from_instance('emarking', $emarking->id);
+				$contextdst = context_module::instance($cmdst->id);
+				list($gradingmanager, $gradingmethod, $definition, $rubriccontroller) = emarking_validate_rubric($contextdst, false, false);
+				$numcriteria = count($definition);
+				$marksql="SELECT count(graded) as graded FROM (SELECT d.id as id, CASE WHEN d.status > 10 AND d.status < 20 AND COUNT(DISTINCT c.id) = $numcriteria THEN 1 ELSE 0 END AS graded
+				FROM {emarking}  nm
+				INNER JOIN {emarking_submission}  s ON (nm.id = :emarkingid AND s.emarking = nm.id)
+				INNER JOIN {emarking_page}  p ON (p.submission = s.id)
+				INNER JOIN {emarking_draft}  d ON (d.submissionid = s.id AND d.qualitycontrol=0 AND d.emarkingid = $emarking->id)
+				LEFT JOIN {emarking_comment}  c on (c.page = p.id AND c.draft = d.id AND c.levelid > 0)
+				LEFT JOIN {gradingform_rubric_levels}  l ON (c.levelid = l.id)
+				LEFT JOIN {emarking_regrade}  r ON (r.draft = d.id AND r.criterion = l.criterionid AND r.accepted = 0)
+				GROUP BY nm.id, s.student) as y";
+				$mark = $DB->get_record_sql($marksql,array('emarkingid' => $emarking->id));
+				
+				
 				if($emarking->printdate == 0){
 					$status = EMARKING_TO_PRINT;
-					
+				
 				}elseif(is_null($emarking->digitalized)){
 					$status = EMARKING_PRINTED;
-					
-				}elseif(is_null($emarking->correctionstarted)){
+				
+				}elseif(is_null($emarking->correctionstarted) ){
 					$status = EMARKING_STATUS_SUBMITTED;
-					
-				}elseif(is_null($emarking->corrected)){
+				
+				}elseif(is_null($emarking->corrected)|| $mark->graded == null && $emarking->status == EMARKING_STATUS_GRADING ){
 					$status = EMARKING_STATUS_GRADING;
-					
-				}elseif(is_null($emarking->firstpublished)){
+				
+				}elseif(is_null($emarking->firstpublished || $mark->graded == 1 && $emarking->status == EMARKING_STATUS_GRADING)){
 					$status = EMARKING_STATUS_GRADED;
-					
-				}elseif(is_null($emarking->regradingstarted)){
+				
+				}elseif(is_null($emarking->regradingstarted) && $emarking->status ==EMARKING_STATUS_PUBLISHED ){
 					$status = EMARKING_STATUS_PUBLISHED;
-					
-				}elseif(is_null($emarking->regraded)){
+				
+				}elseif(is_null($emarking->regraded) || $emarking->status ==EMARKING_STATUS_REGRADING){
 					$status = EMARKING_STATUS_REGRADING;
 					
-				}elseif(is_null($emarking->lastpublished) || $emarking->lastpublished < $emarking->regraded){
+				}elseif(is_null($emarking->lastpublished) || $emarking->lastpublished < $emarking->regraded || $emarking->status ==EMARKING_STATUS_REGRADING_RESPONDED){
 					$status = EMARKING_STATUS_REGRADING_RESPONDED;
 					
-				}elseif((round((time()- $emarking->lastpublished)/86400)) >2){
+				}elseif((round((time()- $emarking->lastpublished)/86400)) >2 && $emarking->status ==EMARKING_STATUS_PUBLISHED){
 					$status = EMARKING_STATUS_2DAYS_PUBLISHED;
-				}else{
+					
+				}elseif($emarking->status ==EMARKING_STATUS_PUBLISHED){
 					$status = EMARKING_STATUS_FINAL_PUBLISHED;
+					
 				}
 				
 				switch ($status) {
@@ -724,6 +743,7 @@ function emarking_time_progression($course, $fortable = null){
 						
 					case EMARKING_PRINTED:
 						$emarkingarray[$position]= array(
+								$emarking->name,
 								(round(($emarking->printdate - $emarking->printorder)/86400)),
 								(round((time() - $emarking->printdate)/86400)),
 								0,0,0,0,0,0,0,0,
@@ -926,4 +946,16 @@ function emarking_cycle_tabs($selectedcourse, $selectedsection, $selectedcategor
 		$tabid = $tabid + 1;
 	}
 	return $emarkingtabs;
+}
+function emarking_testfun(){
+	list($gradingmanager, $gradingmethod, $definition, $rubriccontroller) = emarking_validate_rubric($context, true, true);
+	$numcriteria = count($definition->rubric_criteria);
+	$emarkingsql ="SELECT d.id as id, CASE WHEN d.status > 10 AND d.status < 20 AND COUNT(DISTINCT c.id) = $numcriteria THEN 1 ELSE 0 END AS graded FROM {emarking}  nm
+	INNER JOIN {emarking_submission}  s ON (nm.id = :emarkingid AND s.emarking = nm.id)
+	INNER JOIN {emarking_page}  p ON (p.submission = s.id)
+	INNER JOIN {emarking_draft}  d ON (d.submissionid = s.id AND d.qualitycontrol=0)
+	LEFT JOIN {emarking_comment}  c on (c.page = p.id AND c.draft = d.id AND c.levelid > 0)
+	LEFT JOIN {gradingform_rubric_levels}  l ON (c.levelid = l.id)
+	LEFT JOIN {emarking_regrade}  r ON (r.draft = d.id AND r.criterion = l.criterionid AND r.accepted = 0)";
+	$DB->get_record_sql($emarkingsql, array($emarking->id));
 }
