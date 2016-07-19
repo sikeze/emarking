@@ -108,7 +108,10 @@ echo $OUTPUT->header();
   		echo html_writer::tag('div','', array('id' => 'summarychart','style' => 'height: 600px;'));
   		$chartdata= json_encode(emarking_time_progression($course->id),null);
   		echo emarking_table_creator(null,emarking_time_progression($course->id,1),null);
-  	}
+   	}
+//elseif(){
+  		
+//   	}
 echo $OUTPUT->footer();
   		
 ?>
@@ -120,17 +123,17 @@ echo $OUTPUT->footer();
   		function drawStacked() {
   		
   		      var data = new google.visualization.DataTable();
-  		      data.addColumn('string', 'Nombre Prueba');
-  		      data.addColumn('number', 'Días enviado a imprimir');
-  		      data.addColumn('number', 'Días impreso');
-  		      data.addColumn('number', 'Días digitalizado');
-  		      data.addColumn('number', 'Días en conrreccion');
-  		      data.addColumn('number', 'Días corregido');
-  		      data.addColumn('number', 'Días publicado');
-  		      data.addColumn('number', 'Días en recorreccion');
-  		      data.addColumn('number', 'Días recorregido');
-  		      data.addColumn('number', 'Días en publicacion final');
-  		      data.addColumn('number', 'Días total(comentario)');
+  		      data.addColumn('string', '<?php echo get_string("emarkingname", "mod_emarking"); ?>');
+  		      data.addColumn('number', '<?php echo get_string("dayssenttoprint", "mod_emarking"); ?>');
+  		      data.addColumn('number', '<?php echo get_string("printeddays", "mod_emarking"); ?>');
+  		      data.addColumn('number', '<?php echo get_string("digitalizeddays", "mod_emarking"); ?>');
+  		      data.addColumn('number', '<?php echo get_string("daysincorrection", "mod_emarking"); ?>');
+  		      data.addColumn('number', '<?php echo get_string("gradeddays", "mod_emarking"); ?>');
+  		      data.addColumn('number', '<?php echo get_string("publisheddays", "mod_emarking"); ?>');
+  		      data.addColumn('number', '<?php echo get_string("daysinregrading", "mod_emarking"); ?>');
+  		      data.addColumn('number', '<?php echo get_string("regradeddays", "mod_emarking"); ?>');
+  		      data.addColumn('number', '<?php echo get_string("finalpublicationdays", "mod_emarking"); ?>');
+  		      data.addColumn('number', '<?php echo get_string("totaldays", "mod_emarking"); ?>');
   		      data.addColumn({type: 'string', role: 'annotation'});
   			  data.addRows(<?php echo $chartdata; ?>);
   			  var view = new google.visualization.DataView(data);
