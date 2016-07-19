@@ -672,7 +672,7 @@ function emarking_time_progression($course, $fortable = null){
 					get_string('printeddays', 'mod_emarking'),get_string('digitalizeddays', 'mod_emarking'),
 					get_string('daysincorrection', 'mod_emarking'),get_string('gradeddays', 'mod_emarking'),
 					get_string('publisheddays', 'mod_emarking'),get_string('daysinregrading', 'mod_emarking'),
-					get_string('gradeddays', 'mod_emarking'),get_string('finalpublicationdays', 'mod_emarking'),
+					get_string('regradeddays', 'mod_emarking'),get_string('finalpublicationdays', 'mod_emarking'),
 					get_string('totaldays', 'mod_emarking')];
 			$position++;
 		}
