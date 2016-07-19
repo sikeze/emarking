@@ -323,6 +323,10 @@ function emarking_publish_grade($draft) {
         $draft->status = EMARKING_STATUS_PUBLISHED;
     }
     $draft->timemodified = time();
+    if($draft->timefirstpublished == null){
+    	$draft->timefirstpublished = time();
+    }
+    $draft->timelastpublished = time();
     $DB->update_record('emarking_draft', $draft);
     $submission->status = $draft->status;
     $submission->timemodified = $draft->timemodified;
@@ -986,6 +990,17 @@ function emarking_set_finalgrade($levelid = 0, $levelfeedback = '', $submission 
     $draft->grade = $finalgrade;
     $draft->generalfeedback = $generalfeedback;
     $draft->status = $pendingregrades == 0 ? EMARKING_STATUS_GRADING : EMARKING_STATUS_REGRADING;
+    if($pendingregrades == 0){
+    	if($draft->timecorrectionstarted == null){
+    		$draft->timecorrectionstarted = time();
+    	}
+    	$draft->timecorrectionended = time();
+    }else{
+    	if($draft->timeregradingstarted == null){
+    		$draft->timeregradingstarted = time();
+    	}
+    	$draft->timeregradingended = time();
+    }
     $draft->timemodified = time();
     $DB->update_record('emarking_draft', $draft);
     // Adds an entry in the grades history.
