@@ -947,15 +947,3 @@ function emarking_cycle_tabs($selectedcourse, $selectedsection, $selectedcategor
 	}
 	return $emarkingtabs;
 }
-function emarking_testfun(){
-	list($gradingmanager, $gradingmethod, $definition, $rubriccontroller) = emarking_validate_rubric($context, true, true);
-	$numcriteria = count($definition->rubric_criteria);
-	$emarkingsql ="SELECT d.id as id, CASE WHEN d.status > 10 AND d.status < 20 AND COUNT(DISTINCT c.id) = $numcriteria THEN 1 ELSE 0 END AS graded FROM {emarking}  nm
-	INNER JOIN {emarking_submission}  s ON (nm.id = :emarkingid AND s.emarking = nm.id)
-	INNER JOIN {emarking_page}  p ON (p.submission = s.id)
-	INNER JOIN {emarking_draft}  d ON (d.submissionid = s.id AND d.qualitycontrol=0)
-	LEFT JOIN {emarking_comment}  c on (c.page = p.id AND c.draft = d.id AND c.levelid > 0)
-	LEFT JOIN {gradingform_rubric_levels}  l ON (c.levelid = l.id)
-	LEFT JOIN {emarking_regrade}  r ON (r.draft = d.id AND r.criterion = l.criterionid AND r.accepted = 0)";
-	$DB->get_record_sql($emarkingsql, array($emarking->id));
-}
