@@ -947,3 +947,35 @@ function emarking_cycle_tabs($selectedcourse, $selectedsection, $selectedcategor
 	}
 	return $emarkingtabs;
 }
+function emarking_gantt_data($emarkingid){
+	global $DB;
+	$emarkingdatasql = 'SELECT e.id AS id,
+			e.name AS name,
+			ee.timecreated AS printorder,
+			ee.printdate AS printdate,
+			MIN(ed.timecreated) AS digitalized,
+			MIN(ed.timecorrectionstarted) AS correctionstarted,
+			MAX(ed.timecorrectionended) AS corrected,
+			MIN(ed.timefirstpublished) AS firstpublished,
+			MIN(ed.timeregradingstarted) AS regradingstarted,
+			MAX(ed.timeregradingended) AS regraded,
+			MAX(ed.timelastpublished) AS lastpublished
+			FROM {emarking_exams} AS ee
+            INNER JOIN {emarking} AS e ON (e.id = ee.emarking AND ee.id = ?)
+			LEFT JOIN {emarking_draft} AS ed ON (e.id = ed.emarkingid)';
+
+	$emarkingdata = $DB->get_record_sql($emarkingdatasql, array($emarkingid));
+
+	$chartdefaultdata = array(
+			array('1', 'enviado a imprimir', 'Impresión', $emarkingdata->printorder*1000, $emarkingdata->printdate*1000, null, 100, null),
+			array('2', 'impreso', 'Impresión', $emarkingdata->printdate*1000, $emarkingdata->digitalized*1000, null, 100, '1'),
+			array('3', 'digitalizado', 'Digitalización', $emarkingdata->digitalized*1000, $emarkingdata->correctionstarted*1000, null, 100, '2'),
+			array('4', 'en correccion', 'Corrección', $emarkingdata->correctionstarted*1000, $emarkingdata->corrected*1000, null, 100, '3'),
+			array('5', 'corregido', 'Corrección', $emarkingdata->corrected*1000, $emarkingdata->firstpublished*1000, null, 100, '4'),
+			array('6', 'publicado', 'Publicación', $emarkingdata->firstpublished*1000, $emarkingdata->regradingstarted*1000, null, 100, '5'),
+			array('7', 'en recorreccion', 'Recorrección', $emarkingdata->regradingstarted*1000, $emarkingdata->regraded*1000, null, 100, '6'),
+			array('8', 'recorregido', 'Recorrección', $emarkingdata->regraded*1000, $emarkingdata->lastpublished*1000, null, 100, '7'),
+			array('9', 'publicado final', 'Publicación', $emarkingdata->lastpublished*1000, $emarkingdata->lastpublished*1000, null, 100, '8')
+	);
+	return $chartdefaultdata;
+}
