@@ -81,23 +81,20 @@ echo $OUTPUT->header();
 		$selectedsection = $curretcourse[3];
 	}
 
-	$out = html_writer::div('<h2>'.get_string('filters', 'mod_emarking').'</h2>');
-	echo $out;
+	echo html_writer::div('<h2>'.get_string('filters', 'mod_emarking').'</h2>');;
 
 	$addform->display();
 	
-	$datas = $addform->get_data();
-	
-	if($datas || $selectedcategory != "NULL" && $selectedcourse != "NULL" && $selectedsection > -1){
-		if($datas){
+	if($datas = $addform->get_data()){
 			$selectedcourse = $datas->courses;
 			$selectedsection = $datas->section;
 			$selectedcategory = $datas->category;
-		}
-		$emarkingtabs = emarking_cycle_tabs($selectedcourse, $selectedsection, $selectedcategory, $course);
-		echo $OUTPUT->tabtree($emarkingtabs, $currenttab);
 	}
-
+	$emarkingtabs = emarking_cycle_tabs($selectedcourse, $selectedsection, $selectedcategory, $course);
+	
+	echo $OUTPUT->tabtree($emarkingtabs, $currenttab);
+	
+	$summarychartdata = json_encode([[0,0]]);
   	if($currenttab == 0){
   		define('EMARKING_TO_PRINT',0);
   		define('EMARKING_PRINTED',5);
@@ -106,20 +103,21 @@ echo $OUTPUT->header();
   		define('EMARKING_STATUS_2DAYS_PUBLISHED',50);
   		
   		echo html_writer::tag('div','', array('id' => 'summarychart','style' => 'height: 600px;'));
-  		$chartdata= json_encode(emarking_time_progression($course->id),null);
+  		$summarychartdata= json_encode(emarking_time_progression($course->id),null);
   		echo emarking_table_creator(null,emarking_time_progression($course->id,1),null);
+   	}else{
+   		echo html_writer::div('','', array('id' => 'ganttchart','style' => 'height: 400px;'));
+   		echo html_writer::div('','', array('id' => 'areachart','style' => 'height: 600px;'));
    	}
-//elseif(){
-  		
-//   	}
 echo $OUTPUT->footer();
   		
 ?>
-  		<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+  		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   		<script type="text/javascript">
-  		google.load("visualization", "1", {packages: ['corechart', 'bar']});
-  		google.setOnLoadCallback(drawStacked);
-  		
+  		google.charts.load('current', {'packages':['corechart', 'gantt']});
+  		if (<?php echo $currenttab;?> == 0){
+  		google.charts.setOnLoadCallback(drawStacked);
+  		}
   		function drawStacked() {
   		
   		      var data = new google.visualization.DataTable();
@@ -135,7 +133,7 @@ echo $OUTPUT->footer();
   		      data.addColumn('number', '<?php echo get_string("finalpublicationdays", "mod_emarking"); ?>');
   		      data.addColumn('number', '<?php echo get_string("totaldays", "mod_emarking"); ?>');
   		      data.addColumn({type: 'string', role: 'annotation'});
-  			  data.addRows(<?php echo $chartdata; ?>);
+  			  data.addRows(<?php echo $summarychartdata; ?>);
   			  var view = new google.visualization.DataView(data);
   			  view.setColumns([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
   		      var options = {
@@ -154,3 +152,78 @@ echo $OUTPUT->footer();
   		      chart.draw(view, options);
   		    }
   		</script>
+  		<script>
+  		if(<?php echo $currenttab;?> != 0){
+  		google.charts.setOnLoadCallback(drawganttChart);
+  		}
+    function drawganttChart() {
+
+      var data = new google.visualization.DataTable();
+      data.addColumn('string', 'Task ID');
+      data.addColumn('string', 'Task Name');
+      data.addColumn('string', 'Resource');
+      data.addColumn('date', 'Start Date');
+      data.addColumn('date', 'End Date');
+      data.addColumn('number', 'Duration');
+      data.addColumn('number', 'Percent Complete');
+      data.addColumn('string', 'Dependencies');
+
+      data.addRows([
+        ['2014Spring', 'Spring 2014', 'spring',new Date(2014, 2, 22), new Date(2014, 5, 20), null, 100, null],
+        ['2014Summer', 'Summer 2014', 'summer',
+         new Date(2014, 5, 21), new Date(2014, 8, 20), null, 100, null],
+        ['2014Autumn', 'Autumn 2014', 'autumn',
+         new Date(2014, 8, 21), new Date(2014, 11, 20), null, 100, null],
+        ['2014Winter', 'Winter 2014', 'winter',
+         new Date(2014, 11, 21), new Date(2015, 2, 21), null, 100, null],
+        ['2015Spring', 'Spring 2015', 'spring',
+         new Date(2015, 2, 22), new Date(2015, 5, 20), null, 50, null],
+        ['2015Summer', 'Summer 2015', 'summer',
+         new Date(2015, 5, 21), new Date(2015, 8, 20), null, 0, null],
+        ['2015Autumn', 'Autumn 2015', 'autumn',
+         new Date(2015, 8, 21), new Date(2015, 11, 20), null, 0, null],
+        ['2015Winter', 'Winter 2015', 'winter',
+         new Date(2015, 11, 21), new Date(2016, 2, 21), null, 0, null],
+        ['Football', 'Football Season', 'sports',
+         new Date(2014, 8, 4), new Date(2015, 1, 1), null, 100, null],
+        ['Baseball', 'Baseball Season', 'sports',
+         new Date(2015, 2, 31), new Date(2015, 9, 20), null, 14, null],
+        ['Basketball', 'Basketball Season', 'sports',
+         new Date(2014, 9, 28), new Date(2015, 5, 20), null, 86, null],
+        ['Hockey', 'Hockey Season', 'sports',
+         new Date(2014, 9, 8), new Date(2015, 5, 21), null, 89, null]
+      ]);
+
+      var options = {
+        height: 400,
+        gantt: {
+          trackHeight: 30
+        }
+      };
+
+      var chart = new google.visualization.Gantt(document.getElementById('ganttchart'));
+
+      chart.draw(data, options);
+    }
+    </script>
+    <script>
+    google.charts.setOnLoadCallback(drawareaChart);
+      function drawareaChart() {
+        var data = google.visualization.arrayToDataTable([
+          ['Year', 'Sales', 'Expenses'],
+          ['2013',  1000,      400],
+          ['2014',  1170,      460],
+          ['2015',  660,       1120],
+          ['2016',  1030,      540]
+        ]);
+
+        var options = {
+          title: 'Company Performance',
+          hAxis: {title: 'Year',  titleTextStyle: {color: '#333'}},
+          vAxis: {minValue: 0}
+        };
+
+        var areachart = new google.visualization.AreaChart(document.getElementById('areachart'));
+        areachart.draw(data, options);
+      }
+    </script>
