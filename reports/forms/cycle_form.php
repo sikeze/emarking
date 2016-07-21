@@ -44,7 +44,8 @@ class cycle_form extends moodleform {
 				INNER JOIN {context} ct ON (ct.id = ra.contextid)
 				INNER JOIN {course} c ON (c.id = ct.instanceid)
 				INNER JOIN {course_categories} cc ON (cc.id = c.category)
-				INNER JOIN {role} r ON (r.id = ra.roleid AND r.shortname IN ('teacher', 'editingteacher'))";
+				INNER JOIN {role} r ON (r.id = ra.roleid AND r.shortname IN ('teacher', 'editingteacher', 'manager'))
+                GROUP BY course_id";
 		
 		$teachercourses = $DB->get_records_sql($teachercoursessql, array($userid));
 		
