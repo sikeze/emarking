@@ -33,7 +33,7 @@ global $DB, $USER, $CFG, $OUTPUT, $COURSE;
 
 // Course id, if the user comes from a course.
 $courseid = required_param("course", PARAM_INT);
-$emarkingid = optional_param("eid", -1, PARAM_INT);
+$emarkingid = optional_param("emarking", -1, PARAM_INT);
 $selectedcategory = optional_param("selectedcategory", "NULL", PARAM_TEXT);
 $selectedcourse = optional_param("selectedcourse", "NULL", PARAM_TEXT);
 $selectedsection = optional_param("selectedsection", -1, PARAM_INT);
@@ -50,6 +50,10 @@ if (isguestuser()) {
 if (! $course = $DB->get_record("course", array(
 		"id" => $courseid))) {
 		print_error(get_string("invalidcourseid", "mod_emarking"));
+}
+if (!$isemarking = $DB->get_records("emarking", array(
+		"course" => $courseid))) {
+		print_error(get_string("invalidemarkingcourse", "mod_emarking"));
 }
 
 // Both contexts, from course and category, for permissions later.
@@ -156,8 +160,20 @@ echo $OUTPUT->footer();
   		if(<?php echo $currenttab;?> != 0){
   		google.charts.setOnLoadCallback(drawganttChart);
   		}
+  		
     function drawganttChart() {
 
+    	var dataarray = <?php echo  json_encode(emarking_gantt_data($emarkingid));?>;
+    	var arraylength = dataarray.length;
+    	var startdate = 0;
+		var enddate = 0;
+    	for (var i = 0; i < arraylength; i++) {
+    		startdate = dataarray[i][3]
+    		enddate = dataarray[i][4]
+			dataarray[i][3] = new Date(startdate);
+			dataarray[i][4] = new Date(enddate);
+    	}
+    	
       var data = new google.visualization.DataTable();
       data.addColumn('string', 'Task ID');
       data.addColumn('string', 'Task Name');
@@ -168,31 +184,7 @@ echo $OUTPUT->footer();
       data.addColumn('number', 'Percent Complete');
       data.addColumn('string', 'Dependencies');
 
-      data.addRows([
-        ['2014Spring', 'Spring 2014', 'spring',new Date(2014, 2, 22), new Date(2014, 5, 20), null, 100, null],
-        ['2014Summer', 'Summer 2014', 'summer',
-         new Date(2014, 5, 21), new Date(2014, 8, 20), null, 100, null],
-        ['2014Autumn', 'Autumn 2014', 'autumn',
-         new Date(2014, 8, 21), new Date(2014, 11, 20), null, 100, null],
-        ['2014Winter', 'Winter 2014', 'winter',
-         new Date(2014, 11, 21), new Date(2015, 2, 21), null, 100, null],
-        ['2015Spring', 'Spring 2015', 'spring',
-         new Date(2015, 2, 22), new Date(2015, 5, 20), null, 50, null],
-        ['2015Summer', 'Summer 2015', 'summer',
-         new Date(2015, 5, 21), new Date(2015, 8, 20), null, 0, null],
-        ['2015Autumn', 'Autumn 2015', 'autumn',
-         new Date(2015, 8, 21), new Date(2015, 11, 20), null, 0, null],
-        ['2015Winter', 'Winter 2015', 'winter',
-         new Date(2015, 11, 21), new Date(2016, 2, 21), null, 0, null],
-        ['Football', 'Football Season', 'sports',
-         new Date(2014, 8, 4), new Date(2015, 1, 1), null, 100, null],
-        ['Baseball', 'Baseball Season', 'sports',
-         new Date(2015, 2, 31), new Date(2015, 9, 20), null, 14, null],
-        ['Basketball', 'Basketball Season', 'sports',
-         new Date(2014, 9, 28), new Date(2015, 5, 20), null, 86, null],
-        ['Hockey', 'Hockey Season', 'sports',
-         new Date(2014, 9, 8), new Date(2015, 5, 21), null, 89, null]
-      ]);
+      data.addRows(dataarray);
 
       var options = {
         height: 400,
@@ -207,7 +199,9 @@ echo $OUTPUT->footer();
     }
     </script>
     <script>
+    if(<?php echo $currenttab;?> != 0){
     google.charts.setOnLoadCallback(drawareaChart);
+    }
       function drawareaChart() {
         var data = google.visualization.arrayToDataTable([
           ['Year', 'Sales', 'Expenses'],

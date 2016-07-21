@@ -966,6 +966,12 @@ function emarking_gantt_data($emarkingid){
 
 	$emarkingdata = $DB->get_record_sql($emarkingdatasql, array($emarkingid));
 
+	if((time() - $emarkingdata->lastpublished) >2){
+		$finaltime = $emarkingdata->lastpublished + 172800;
+	}else{
+		$finaltime = time();
+	}
+	
 	$chartdefaultdata = array(
 			array('1', 'enviado a imprimir', 'Impresión', $emarkingdata->printorder*1000, $emarkingdata->printdate*1000, null, 100, null),
 			array('2', 'impreso', 'Impresión', $emarkingdata->printdate*1000, $emarkingdata->digitalized*1000, null, 100, '1'),
@@ -975,7 +981,7 @@ function emarking_gantt_data($emarkingid){
 			array('6', 'publicado', 'Publicación', $emarkingdata->firstpublished*1000, $emarkingdata->regradingstarted*1000, null, 100, '5'),
 			array('7', 'en recorreccion', 'Recorrección', $emarkingdata->regradingstarted*1000, $emarkingdata->regraded*1000, null, 100, '6'),
 			array('8', 'recorregido', 'Recorrección', $emarkingdata->regraded*1000, $emarkingdata->lastpublished*1000, null, 100, '7'),
-			array('9', 'publicado final', 'Publicación', $emarkingdata->lastpublished*1000, $emarkingdata->lastpublished*1000, null, 100, '8')
+			array('9', 'publicado final', 'Publicación', $emarkingdata->lastpublished*1000, $finaltime*1000, null, 100, '8')
 	);
 	return $chartdefaultdata;
 }
