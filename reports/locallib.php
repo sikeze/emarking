@@ -985,3 +985,83 @@ function emarking_gantt_data($emarkingid){
 	);
 	return $chartdefaultdata;
 }
+function emarking_area_chart($emarkingid){
+	global $DB;
+
+	$draftsdatasql = 'SELECT ed.id AS draftid,
+				ed.timecorrectionstarted AS correctionstarted,
+				ed.timecorrectionended AS correctionended,
+				ed.timefirstpublished AS publicationstarted,
+				ed.timelastpublished AS publicationended,
+				ed.timeregradingstarted AS regradingstarted,
+				ed.timeregradingended AS regradingended
+				FROM mdl_emarking_draft AS ed
+				WHERE ed.emarkingid = ?';
+	
+	$draftsdata = $DB->get_records_sql($draftsdatasql, array($emarkingid));
+	
+	$chartparameterssql = 'SELECT COUNT(ed.id) AS quantity,
+				MIN(ed.timecorrectionstarted) AS startdate,
+				MAX(ed.timelastpublished) AS enddate
+				FROM mdl_emarking_draft AS ed
+				WHERE ed.emarkingid = ?';
+	
+	$chartparameters = $DB->get_record_sql($chartparameterssql, array($emarkingid));
+	
+	//var_dump($chartparameters);
+	
+	$startdate = (floor($chartparameters->startdate / 86400) * 86400) + 14400; // 14400 por la diferencia horaria en chile con la utc
+	$enddate = (ceil($chartparameters->enddate / 86400) * 86400) + 14400;
+	$unixday = 86400;
+	
+//echo $startdate;
+//echo $enddate;
+// var_dump($draftsdata);
+ 
+ $currentdata = array();
+ 
+	foreach($draftsdata as $draftdates){
+		$currentdata[$draftdates->draftid] = 'Digitalized';
+	}
+//	var_dump($currentdata);
+	
+	$areachart = array(array('Date', 'Digitalized', 'Graded', 'Publicated', 'Regraded', 'Repiblished')); 
+	$aux = array();
+	
+	for ($date = $startdate; $date < $enddate; $date += $unixday){
+		$digitalized = 0;
+		$graded = 0;
+		$publicated = 0;
+		$regraded = 0;
+		$republished = 0;
+		
+//		echo $date.'<br>';
+		
+		foreach($draftsdata as $draftdates){
+			
+			if($draftdates->publicationended < $date + 86400){
+				$currentdata[$draftdates->draftid] = 'republished';
+				$republished = $republished + 1;
+			}elseif($draftdates->regradingended > $date && $draftdates->regradingended < $date + 86400){
+				$currentdata[$draftdates->draftid] = 'regraded';
+				$regraded = $regraded + 1;
+			}elseif($draftdates->publicationstarted > $date && $draftdates->publicationstarted < $date + 86400){
+				$currentdata[$draftdates->draftid] = 'publicated';
+				$publicated = $publicated + 1;
+			}elseif($draftdates->correctionended > $date && $draftdates->correctionended < $date + 86400){
+				$currentdata[$draftdates->draftid] = 'graded';
+				$graded = $graded + 1;
+			}else{
+				$currentdata[$draftdates->draftid] = 'digitalized';
+				$digitalized = $digitalized + 1;
+			}
+		}
+		
+		$aux = array($date * 1000, $digitalized, $graded, $publicated, $regraded, $republished);
+		$areachart[] = $aux;
+	}
+	var_dump($areachart);
+	
+	return $areachart;
+}
+
