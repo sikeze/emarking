@@ -108,8 +108,11 @@ echo $OUTPUT->header();
   		
   		echo html_writer::tag('div','', array('id' => 'summarychart','style' => 'height: 600px;'));
   		$summarychartdata= json_encode(emarking_time_progression($course->id),null);
+  		echo html_writer::start_tag('div');
   		echo emarking_table_creator(null,emarking_time_progression($course->id,1),null);
    	}else{
+   		emarking_markers_corrections($emarkingid);
+   		print_r(emarking_area_chart($emarkingid));
    		echo html_writer::div('','', array('id' => 'ganttchart','style' => 'height: 400px;'));
    		echo html_writer::div('','', array('id' => 'areachart','style' => 'height: 600px;'));
    	}
@@ -137,13 +140,14 @@ echo $OUTPUT->footer();
   		      data.addColumn('number', '<?php echo get_string("finalpublicationdays", "mod_emarking"); ?>');
   		      data.addColumn('number', '<?php echo get_string("totaldays", "mod_emarking"); ?>');
   		      data.addColumn({type: 'string', role: 'annotation'});
-  			  data.addRows(<?php echo $summarychartdata; ?>);
+  			  data.addRows([["Mi primera prueba :3",0,3,1,2,6,2,6,7,-18,0,"9 Days"],["123",3,0,0,0,0,0,0,0,0,0,"3 Days"]]);
   			  var view = new google.visualization.DataView(data);
   			  view.setColumns([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
   		      var options = {
   		        title: '<?php echo get_string("emarkingsummary", "mod_emarking");?>',
   		        chartArea: {width: '50%'},
   		        isStacked: true,
+  		      	bar: {groupWidth: "50%"},
   		        hAxis: {
   		          title: '<?php echo get_string("days", "mod_emarking");?>',
   		          viewWindow: {min: 0},
@@ -203,16 +207,12 @@ echo $OUTPUT->footer();
     google.charts.setOnLoadCallback(drawareaChart);
     }
       function drawareaChart() {
-        var data = google.visualization.arrayToDataTable([
-          ['Year', 'Sales', 'Expenses'],
-          ['2013',  1000,      400],
-          ['2014',  1170,      460],
-          ['2015',  660,       1120],
-          ['2016',  1030,      540]
-        ]);
+ 
+        var data = google.visualization.arrayToDataTable(<?php echo  json_encode(emarking_area_chart($emarkingid));?>);
 
         var options = {
           title: 'Company Performance',
+          isStacked: true,
           hAxis: {title: 'Year',  titleTextStyle: {color: '#333'}},
           vAxis: {minValue: 0}
         };

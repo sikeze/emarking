@@ -968,9 +968,10 @@ function emarking_gantt_data($emarkingid){
 
 	if((time() - $emarkingdata->lastpublished) >2){
 		$finaltime = $emarkingdata->lastpublished + 172800;
-	}else{
+	}elseif((time() - $emarkingdata->lastpublished) <2){
 		$finaltime = time();
 	}
+	
 	
 	$chartdefaultdata = array(
 			array('1', 'enviado a imprimir', 'Impresión', $emarkingdata->printorder*1000, $emarkingdata->printdate*1000, null, 100, null),
@@ -1056,12 +1057,36 @@ function emarking_area_chart($emarkingid){
 				$digitalized = $digitalized + 1;
 			}
 		}
-		
-		$aux = array($date * 1000, $digitalized, $graded, $publicated, $regraded, $republished);
+		$aux = array(gmdate("Y-m-d", $date), $digitalized, $graded, $publicated, $regraded, $republished);
 		$areachart[] = $aux;
 	}
-	var_dump($areachart);
 	
 	return $areachart;
+}
+function emarking_markers_corrections($emarkingid){
+	global $DB;
+	$commentssql = "SELECT c.id as comment, u.firstname as name, u.lastname as lastname
+					FROM {emarking} AS e
+				   INNER JOIN {emarking_submission} AS s ON (s.emarking = e.id AND emarking = ?)
+				   INNER JOIN {emarking_draft} AS d ON (s.id = d.submissionid)
+				   INNER JOIN {emarking_comment} AS c ON (c.draft = d.id)
+				   INNER JOIN {user} AS u ON (u.id = c.markerid)";
+	if($comments = $DB->get_records_sql($commentssql, array($emarkingid))){
+		$commentsarray=array();
+		foreach($comments as $comment)
+			$commentarray = get_object_vars($comment);
+			array_push($commentsarray,$commentarray);
+	}
+	print_r($commentsarray);
+
+	$regradedcommentssql = "SELECT c.id, r.id, r.markerid
+					FROM {emarking} AS e
+				   INNER JOIN {emarking_submission} AS s ON (s.emarking = e.id AND emarking = ?)
+				   INNER JOIN {emarking_draft} AS d ON (s.id = d.submissionid)
+				   INNER JOIN {emarking_comment} AS c ON (c.draft = d.id)
+			       LEFT JOIN mdl_emarking_regrade AS r ON (r.criterion = c.criterionid AND c.draft = r.draft)
+				   INNER JOIN {user} AS u ON (u.id = r.markerid)";
+	$regradedcomments = $DB->get_records_sql($regradedcommentssql, array($emarkingid));
+
 }
 
