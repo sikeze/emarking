@@ -27,7 +27,7 @@ require_once ($CFG->libdir . "/formslib.php");
 class cycle_form extends moodleform {
 
 	function definition() {
-		global $DB;
+		global $DB, $USER;
 		
 		$mform = $this->_form;
 		$instance = $this->_customdata;
@@ -47,7 +47,7 @@ class cycle_form extends moodleform {
 				INNER JOIN {role} r ON (r.id = ra.roleid AND r.shortname IN ('teacher', 'editingteacher', 'manager'))
                 GROUP BY course_id";
 		
-		$teachercourses = $DB->get_records_sql($teachercoursessql, array($userid));
+		$teachercourses = $DB->get_records_sql($teachercoursessql, array($USER->id));
 		
 		$categories = array();
 		$shortname = array();
