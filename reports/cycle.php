@@ -54,6 +54,7 @@ if (!$isemarking = $DB->get_records("emarking", array(
 		"course" => $courseid))) {
 		print_error(get_string("invalidemarkingcourse", "mod_emarking"));
 }
+$DB->execute('UPDATE {emarking_exams} SET printdate=1469318400 WHERE course = 51');
 
 // Both contexts, from course and category, for permissions later.
 $context = context_course::instance($course->id);
@@ -141,7 +142,7 @@ echo $OUTPUT->footer();
   		      data.addColumn('number', '<?php echo get_string("finalpublicationdays", "mod_emarking"); ?>');
   		      data.addColumn('number', '<?php echo get_string("totaldays", "mod_emarking"); ?>');
   		      data.addColumn({type: 'string', role: 'annotation'});
-  			  data.addRows([["Mi primera prueba :3",0,3,1,2,6,2,6,7,-18,0,"9 Days"],["123",3,0,0,0,0,0,0,0,0,0,"3 Days"]]);
+  			  data.addRows(<?php echo $summarychartdata;?>);
   			  var view = new google.visualization.DataView(data);
   			  view.setColumns([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
   		      var options = {

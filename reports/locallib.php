@@ -1065,15 +1065,17 @@ function emarking_area_chart($emarkingid){
 function emarking_markers_corrections($emarkingid){
 	global $DB;
 	$commentssql = "SELECT  comment,CONCAT(u.firstname,' ',u.lastname), correctiontime
-			FROM (SELECT c.id as comment, IF(r.id IS NULL,c.markerid,r.markerid) as marker, c.timecreated as correctiontime
-						FROM {emarking} AS e
-					   INNER JOIN {emarking_submission} AS s ON (s.emarking = e.id AND emarking = ?)
-					   INNER JOIN {emarking_draft} AS d ON (s.id = d.submissionid)
-					   INNER JOIN {emarking_comment} AS c ON (c.draft = d.id)
-				       LEFT JOIN mdl_emarking_regrade AS r ON (r.criterion = c.criterionid AND c.draft = r.draft)) as y
-			INNER JOIN {user} AS u ON (y.marker = u.id)
-			";
+					FROM (SELECT c.id as comment, IF(r.id IS NULL,c.markerid,r.markerid) as marker, c.timecreated as correctiontime
+						  FROM {emarking} AS e
+						  INNER JOIN {emarking_submission} AS s ON (s.emarking = e.id AND emarking = ?)
+						  INNER JOIN {emarking_draft} AS d ON (s.id = d.submissionid)
+						  INNER JOIN {emarking_comment} AS c ON (c.draft = d.id)
+					      LEFT JOIN mdl_emarking_regrade AS r ON (r.criterion = c.criterionid AND c.draft = r.draft)) as y
+						  INNER JOIN {user} AS u ON (y.marker = u.id)
+						  ORDER BY correctiontime ASC";
 	if($comments = $DB->get_records_sql($commentssql, array($emarkingid))){
-		print_r($comments);
+		Foreach($comments as $comment){
+			
+		}
 	}
 }
