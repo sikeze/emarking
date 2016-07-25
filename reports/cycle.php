@@ -54,7 +54,7 @@ if (!$isemarking = $DB->get_records("emarking", array(
 		"course" => $courseid))) {
 		print_error(get_string("invalidemarkingcourse", "mod_emarking"));
 }
-$DB->execute('UPDATE {emarking_exams} SET printdate=1469318400 WHERE course = 51');
+$DB->execute('UPDATE {emarking_exams} SET printdate=0 WHERE course = 51');
 
 // Both contexts, from course and category, for permissions later.
 $context = context_course::instance($course->id);
