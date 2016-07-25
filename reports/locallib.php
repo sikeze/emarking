@@ -972,7 +972,6 @@ function emarking_gantt_data($emarkingid){
 		$finaltime = time();
 	}
 	
-	
 	$chartdefaultdata = array(
 			array('1', 'enviado a imprimir', 'Impresión', $emarkingdata->printorder*1000, $emarkingdata->printdate*1000, null, 100, null),
 			array('2', 'impreso', 'Impresión', $emarkingdata->printdate*1000, $emarkingdata->digitalized*1000, null, 100, '1'),
@@ -1065,28 +1064,17 @@ function emarking_area_chart($emarkingid){
 }
 function emarking_markers_corrections($emarkingid){
 	global $DB;
-	$commentssql = "SELECT c.id as comment, u.firstname as name, u.lastname as lastname
-					FROM {emarking} AS e
-				   INNER JOIN {emarking_submission} AS s ON (s.emarking = e.id AND emarking = ?)
-				   INNER JOIN {emarking_draft} AS d ON (s.id = d.submissionid)
-				   INNER JOIN {emarking_comment} AS c ON (c.draft = d.id)
-				   INNER JOIN {user} AS u ON (u.id = c.markerid)";
+	$commentssql = "SELECT  comment,CONCAT(u.firstname,' ',u.lastname), correctiontime
+			FROM (SELECT c.id as comment, IF(r.id IS NULL,c.markerid,r.markerid) as marker, c.timecreated as correctiontime
+						FROM {emarking} AS e
+					   INNER JOIN {emarking_submission} AS s ON (s.emarking = e.id AND emarking = ?)
+					   INNER JOIN {emarking_draft} AS d ON (s.id = d.submissionid)
+					   INNER JOIN {emarking_comment} AS c ON (c.draft = d.id)
+				       LEFT JOIN mdl_emarking_regrade AS r ON (r.criterion = c.criterionid AND c.draft = r.draft)) as y
+			INNER JOIN {user} AS u ON (y.marker = u.id)
+			";
 	if($comments = $DB->get_records_sql($commentssql, array($emarkingid))){
-		$commentsarray=array();
-		foreach($comments as $comment)
-			$commentarray = get_object_vars($comment);
-			array_push($commentsarray,$commentarray);
+		print_r($comments);
 	}
-	print_r($commentsarray);
-
-	$regradedcommentssql = "SELECT c.id, r.id, r.markerid
-					FROM {emarking} AS e
-				   INNER JOIN {emarking_submission} AS s ON (s.emarking = e.id AND emarking = ?)
-				   INNER JOIN {emarking_draft} AS d ON (s.id = d.submissionid)
-				   INNER JOIN {emarking_comment} AS c ON (c.draft = d.id)
-			       LEFT JOIN mdl_emarking_regrade AS r ON (r.criterion = c.criterionid AND c.draft = r.draft)
-				   INNER JOIN {user} AS u ON (u.id = r.markerid)";
-	$regradedcomments = $DB->get_records_sql($regradedcommentssql, array($emarkingid));
-
 }
 

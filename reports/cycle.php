@@ -45,7 +45,9 @@ require_login();
 if (isguestuser()) {
 	die();
 }
-
+if (! has_capability('mod/emarking:viewemarkingcycle', $context)) {
+	print_error(get_string("notallowed", "mod_emarking"));
+}
 // Validate that the parameter corresponds to a course.
 if (! $course = $DB->get_record("course", array(
 		"id" => $courseid))) {
@@ -112,7 +114,6 @@ echo $OUTPUT->header();
   		echo emarking_table_creator(null,emarking_time_progression($course->id,1),null);
    	}else{
    		emarking_markers_corrections($emarkingid);
-   		print_r(emarking_area_chart($emarkingid));
    		echo html_writer::div('','', array('id' => 'ganttchart','style' => 'height: 400px;'));
    		echo html_writer::div('','', array('id' => 'areachart','style' => 'height: 600px;'));
    	}
