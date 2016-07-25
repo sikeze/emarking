@@ -45,9 +45,6 @@ require_login();
 if (isguestuser()) {
 	die();
 }
-if (! has_capability('mod/emarking:viewemarkingcycle', $context)) {
-	print_error(get_string("notallowed", "mod_emarking"));
-}
 // Validate that the parameter corresponds to a course.
 if (! $course = $DB->get_record("course", array(
 		"id" => $courseid))) {
@@ -60,7 +57,10 @@ if (!$isemarking = $DB->get_records("emarking", array(
 
 // Both contexts, from course and category, for permissions later.
 $context = context_course::instance($course->id);
-
+// Capability access
+if (! has_capability('mod/emarking:viewemarkingcycle', $context)) {
+	print_error(get_string("notallowed", "mod_emarking"));
+}
 // URL for current page.
 $url = new moodle_url("/mod/emarking/reports/cycle.php", array(
 		"course" => $course->id, "emarking" => $emarkingid));

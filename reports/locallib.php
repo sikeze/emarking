@@ -1077,4 +1077,3 @@ function emarking_markers_corrections($emarkingid){
 		print_r($comments);
 	}
 }
-
