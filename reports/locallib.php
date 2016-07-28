@@ -987,95 +987,145 @@ function emarking_gantt_data($emarkingid){
 }
 function emarking_area_chart($emarkingid){
 	global $DB;
+	
+	$chartparameterssql = "SELECT COUNT(ed.id) AS quantity,
+				MIN(FROM_UNIXTIME(ed.timecorrectionstarted, '%Y-%m-%d')) AS startdate,
+				MAX(FROM_UNIXTIME(ed.timelastpublished, '%Y-%m-%d')) AS enddate
+				FROM mdl_emarking_draft AS ed
+				WHERE ed.emarkingid = ?";
+	
+	if($chartparameters = $DB->get_record_sql($chartparameterssql, array($emarkingid))){
 
-	$draftsdatasql = 'SELECT ed.id AS draftid,
-				ed.timecorrectionstarted AS correctionstarted,
-				ed.timecorrectionended AS correctionended,
-				ed.timefirstpublished AS publicationstarted,
-				ed.timelastpublished AS publicationended,
-				ed.timeregradingstarted AS regradingstarted,
-				ed.timeregradingended AS regradingended
-				FROM mdl_emarking_draft AS ed
-				WHERE ed.emarkingid = ?';
-	
-	$draftsdata = $DB->get_records_sql($draftsdatasql, array($emarkingid));
-	
-	$chartparameterssql = 'SELECT COUNT(ed.id) AS quantity,
-				MIN(ed.timecorrectionstarted) AS startdate,
-				MAX(ed.timelastpublished) AS enddate
-				FROM mdl_emarking_draft AS ed
-				WHERE ed.emarkingid = ?';
-	
-	$chartparameters = $DB->get_record_sql($chartparameterssql, array($emarkingid));
-	
-	//var_dump($chartparameters);
-	
-	$startdate = (floor($chartparameters->startdate / 86400) * 86400) + 14400; // 14400 por la diferencia horaria en chile con la utc
-	$enddate = (ceil($chartparameters->enddate / 86400) * 86400) + 14400;
-	$unixday = 86400;
-	
-//echo $startdate;
-//echo $enddate;
-// var_dump($draftsdata);
- 
- $currentdata = array();
- 
-	foreach($draftsdata as $draftdates){
-		$currentdata[$draftdates->draftid] = 'Digitalized';
-	}
-//	var_dump($currentdata);
-	
-	$areachart = array(array('Date', 'Digitalized', 'Graded', 'Publicated', 'Regraded', 'Repiblished')); 
-	$aux = array();
-	
-	for ($date = $startdate; $date < $enddate; $date += $unixday){
-		$digitalized = 0;
-		$graded = 0;
-		$publicated = 0;
-		$regraded = 0;
-		$republished = 0;
+		$date  = $chartparameters->startdate;
+		$date = date('Y-m-d', strtotime(str_replace('-','/', $date)));
+		$date =  date('Y-m-d', strtotime($date. ' - 1 days'));
+		$enddate = $chartparameters->enddate;
+		$enddate = date('Y-m-d', strtotime(str_replace('-','/', $enddate)));
+		$enddate =  date('Y-m-d', strtotime($enddate. ' + 1 days'));
 		
-//		echo $date.'<br>';
+		$draftsdatasql = "SELECT ed.id AS draftid,
+					FROM_UNIXTIME(ed.timecorrectionstarted, '%Y-%m-%d') AS correctionstarted,
+					FROM_UNIXTIME(ed.timecorrectionended, '%Y-%m-%d') AS correctionended,
+					FROM_UNIXTIME(ed.timefirstpublished, '%Y-%m-%d') AS firstpublished,
+					FROM_UNIXTIME(ed.timelastpublished, '%Y-%m-%d') AS lastpublished,
+					FROM_UNIXTIME(ed.timeregradingstarted, '%Y-%m-%d') AS regradingstarted,
+					FROM_UNIXTIME(ed.timeregradingended, '%Y-%m-%d') AS regraded
+					FROM mdl_emarking_draft AS ed
+					WHERE ed.emarkingid = ?";
 		
-		foreach($draftsdata as $draftdates){
-			
-			if($draftdates->publicationended < $date + 86400){
-				$currentdata[$draftdates->draftid] = 'republished';
-				$republished = $republished + 1;
-			}elseif($draftdates->regradingended > $date && $draftdates->regradingended < $date + 86400){
-				$currentdata[$draftdates->draftid] = 'regraded';
-				$regraded = $regraded + 1;
-			}elseif($draftdates->publicationstarted > $date && $draftdates->publicationstarted < $date + 86400){
-				$currentdata[$draftdates->draftid] = 'publicated';
-				$publicated = $publicated + 1;
-			}elseif($draftdates->correctionended > $date && $draftdates->correctionended < $date + 86400){
-				$currentdata[$draftdates->draftid] = 'graded';
-				$graded = $graded + 1;
-			}else{
-				$currentdata[$draftdates->draftid] = 'digitalized';
-				$digitalized = $digitalized + 1;
+		if($draftsdata = $DB->get_records_sql($draftsdatasql, array($emarkingid))){
+		
+		 	$currentdata = array();
+			foreach($draftsdata as $draftdates){
+				$currentdata[$draftdates->draftid] = 'Digitalized';
 			}
+			$areachart = array(array('Date', 'Digitalized','Grading', 'Graded', 'Publicated','Regrading', 'Regraded', 'Repiblished'));
+
+			while($date <= $enddate && $date != null){
+				foreach($draftsdata as $draftstatus){
+					if($draftstatus->correctionstarted == $date){
+						$currentdata[$draftstatus->draftid] = 'Grading';
+					}
+					if($draftstatus->correctionended == $date){
+						$currentdata[$draftstatus->draftid] = 'Graded';
+					}
+					if($draftstatus->firstpublished == $date){
+						$currentdata[$draftstatus->draftid] = 'Publicated';
+					}
+					if($draftstatus->lastpublished == $date){
+						$currentdata[$draftstatus->draftid] = 'finalpublished';
+					}
+					if($draftstatus->regradingstarted == $date){
+						$currentdata[$draftstatus->draftid] = 'regrading';
+					}
+					if($draftstatus->regraded == $date){
+						$currentdata[$draftstatus->draftid] = 'regraded';
+					}
+					
+				}
+				$datacount = [$date,0,0,0,0,0,0,0];
+				foreach($currentdata as $data){
+					if($data == 'Digitalized'){
+						$datacount[1] = $datacount[1] + 1;
+					}
+					if($data == 'Grading'){
+						$datacount[2] = $datacount[2] + 1;
+					}
+					if($data == 'Graded'){
+						$datacount[3] = $datacount[3] + 1;
+					}
+					if($data == 'Publicated'){
+						$datacount[4] = $datacount[4] + 1;
+					}
+					if($data == 'finalpublished'){
+						$datacount[5] = $datacount[5] + 1;
+					}
+					if($data == 'regrading'){
+						$datacount[6] = $datacount[6] + 1;
+					}
+					if($data == 'regraded'){
+						$datacount[7] = $datacount[7] + 1;
+					}
+				}
+				array_push($areachart,$datacount);
+				$datacount = array();
+				$date =  date('Y-m-d', strtotime($date. ' + 1 days'));
+			}
+			
+			return $areachart;
 		}
-		$aux = array(gmdate("Y-m-d", $date), $digitalized, $graded, $publicated, $regraded, $republished);
-		$areachart[] = $aux;
 	}
-	
-	return $areachart;
 }
 function emarking_markers_corrections($emarkingid){
 	global $DB;
-	$commentssql = "SELECT  comment,CONCAT(u.firstname,' ',u.lastname), correctiontime
+	$markerssql = "SELECT  comment,u.id, CONCAT(u.firstname,' ',u.lastname) as name, correctiontime
 					FROM (SELECT c.id as comment, IF(r.id IS NULL,c.markerid,r.markerid) as marker, c.timecreated as correctiontime
 						  FROM {emarking} AS e
 						  INNER JOIN {emarking_submission} AS s ON (s.emarking = e.id AND emarking = ?)
 						  INNER JOIN {emarking_draft} AS d ON (s.id = d.submissionid)
 						  INNER JOIN {emarking_comment} AS c ON (c.draft = d.id)
 					      LEFT JOIN mdl_emarking_regrade AS r ON (r.criterion = c.criterionid AND c.draft = r.draft)) as y
-						  INNER JOIN {user} AS u ON (y.marker = u.id)
-						  ORDER BY correctiontime ASC";
-	if($comments = $DB->get_records_sql($commentssql, array($emarkingid))){
-		Foreach($comments as $comment){
-			
+					INNER JOIN {user} AS u ON (y.marker = u.id)
+					GROUP BY u.id";
+	if($markers = $DB->get_records_sql($markerssql, array($emarkingid))){
+		$arraymarkers = [['date']];
+		$contador = 1;
+		$arraystacking = ['date'=>0];
+		foreach($markers as $marker){
+			$arraymarkers[0][$contador] = $marker->name;
+			$arraystacking[$marker->name] = 0;
+			$contador++;
+		}
+		$commentssql = "SELECT  comment,CONCAT(u.firstname,' ',u.lastname) as name, FROM_UNIXTIME(correctiontime, '%Y-%m-%d') as date
+						FROM (SELECT c.id as comment, IF(r.id IS NULL,c.markerid,r.markerid) as marker, c.timecreated as correctiontime
+							  FROM {emarking} AS e
+							  INNER JOIN {emarking_submission} AS s ON (s.emarking = e.id AND emarking = ?)
+							  INNER JOIN {emarking_draft} AS d ON (s.id = d.submissionid)
+							  INNER JOIN {emarking_comment} AS c ON (c.draft = d.id)
+						      LEFT JOIN mdl_emarking_regrade AS r ON (r.criterion = c.criterionid AND c.draft = r.draft)) as y
+						INNER JOIN {user} AS u ON (y.marker = u.id)
+						ORDER BY correctiontime ASC";
+		if($comments = $DB->get_records_sql($commentssql, array($emarkingid))){
+			$date = 0-0-0;
+			$lenght = count($comments);
+			$datecount = 1;
+			foreach ($comments as $comment){
+				if($date == 0-0-0){
+					$arraystacking['date'] = strtotime ( '-1 day' , strtotime ( $comment->date  ) ) ;
+					$arraystacking['date'] = date ( 'Y-m-j' , $arraystacking['date'] );
+					array_push($arraymarkers, $arraystacking);
+				}
+				$arraystacking['date'] = $comment->date;
+				$arraystacking[$comment->name] = $arraystacking[$comment->name] + 1;
+				if($date < $comment->date || $datecount == $lenght ){
+						array_push($arraymarkers,$arraystacking);
+						$date = $comment->date;
+				}
+				$datecount++;
+			}
+			$arraymarkers = array_map('array_values', $arraymarkers);
+			return $arraymarkers;
 		}
 	}
 }
+

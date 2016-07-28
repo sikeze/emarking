@@ -114,9 +114,10 @@ echo $OUTPUT->header();
   		echo html_writer::start_tag('div');
   		echo emarking_table_creator(null,emarking_time_progression($course->id,1),null);
    	}else{
-   		emarking_markers_corrections($emarkingid);
+   		emarking_area_chart($emarkingid);
    		echo html_writer::div('','', array('id' => 'ganttchart','style' => 'height: 400px;'));
-   		echo html_writer::div('','', array('id' => 'areachart','style' => 'height: 600px;'));
+   		echo html_writer::div('','', array('id' => 'areachart','style' => 'height: 400px;'));
+   		echo html_writer::div('','', array('id' => 'markerschart','style' => 'height: 400px;'));
    	}
 echo $OUTPUT->footer();
   		
@@ -221,5 +222,24 @@ echo $OUTPUT->footer();
 
         var areachart = new google.visualization.AreaChart(document.getElementById('areachart'));
         areachart.draw(data, options);
+      }
+    </script>
+    <script>
+    if(<?php echo $currenttab;?> != 0){
+    google.charts.setOnLoadCallback(drawmarkersChart);
+    }
+      function drawmarkersChart() {
+ 
+        var data = google.visualization.arrayToDataTable(<?php echo  json_encode(emarking_markers_corrections($emarkingid));?>);
+
+        var options = {
+          title: 'Company Performance',
+          isStacked: true,
+          hAxis: {title: 'Year',  titleTextStyle: {color: '#333'}},
+          vAxis: {minValue: 0}
+        };
+
+        var markerschart = new google.visualization.AreaChart(document.getElementById('markerschart'));
+        markerschart.draw(data, options);
       }
     </script>
