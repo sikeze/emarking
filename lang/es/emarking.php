@@ -771,4 +771,5 @@ $string['daysinregrading'] = 'Dias en recorrección';
 $string['regradeddays'] = 'Dias recorregido';
 $string['finalpublicationdays'] = 'Dias en publicación final';
 $string['totaldays'] = 'Dias totales';
+$string['searchcourses'] = 'Buscar Cursos';
 $string['search'] = 'Buscar';
