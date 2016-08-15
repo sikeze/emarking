@@ -763,4 +763,5 @@ $string['daysinregrading'] = 'Days in regrading';
 $string['regradeddays'] = 'Regradeded days';
 $string['finalpublicationdays'] = 'Days in final publication';
 $string['totaldays'] = 'Total days';
+$string['searchcourses'] = 'Search Courses';
 $string['search'] = 'Search';

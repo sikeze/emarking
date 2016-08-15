@@ -24,7 +24,7 @@
 require_once(dirname(dirname(dirname(dirname(dirname(__FILE__)))))."/config.php");
 require_once ($CFG->libdir . "/formslib.php");
 
-class cycle_form extends moodleform {
+class category_form extends moodleform {
 
 	function definition() {
 		global $DB, $USER;
@@ -49,26 +49,27 @@ class cycle_form extends moodleform {
 		
 		$teachercourses = $DB->get_records_sql($teachercoursessql, array($USER->id));
 		
-		$categories = array();
-		$shortname = array();
-		$courseparameters = array();
-		$sections = array();
+//		$categories = array();
+//		$shortname = array();
+//		$courseparameters = array();
+//		$sections = array();
 		
 		foreach($teachercourses as $coursedata){
 			
 			$categories[$coursedata->category_name] = $coursedata->category_name;
-			$courseparameters[] = array(explode('-', $coursedata->course_name), $coursedata->course_id);
+//			$shortname[$coursedata->course_name] = $coursedata->course_name;
+//			$courseparameters[] = array(explode('-', $coursedata->course_name), $coursedata->course_id);
 			
-			foreach($courseparameters as $key => $parameters){
+// 			foreach($courseparameters as $key => $parameters){
 				
-				$shortname[$parameters[0][2]] = $parameters[0][2];
-				$sections[$parameters[0][3]] = $parameters[0][3];
-			}
-		}
+// 				$shortname[$parameters[0][2]] = $parameters[0][2];
+// 				$sections[$parameters[0][3]] = $parameters[0][3];
+// 			}
+ 		}
 
 		$categories = array_unique($categories);
-		$courses = array_unique($shortname);
-		$sections = array_unique($sections);
+//		$courses = array_unique($shortname);
+//		$sections = array_unique($sections);
 		
 		$out = html_writer::div('<h2>'.get_string('filters','mod_emarking').'</h2>');
 		echo $out;
@@ -76,16 +77,16 @@ class cycle_form extends moodleform {
 		$mform->addElement('select', 'category', get_string('category','mod_emarking'), $categories);
 		$mform->setType( 'category', PARAM_TEXT);
 		
-		$mform->addElement('select', 'courses', get_string('course','mod_emarking'), $courses);
-		$mform->setType('courses' , PARAM_TEXT);
+//		$mform->addElement('select', 'courses', get_string('course','mod_emarking'), $courses);
+//		$mform->setType('courses' , PARAM_TEXT);
 		
-		$mform->addElement('select', 'section', get_string('section','mod_emarking'), $sections);
-		$mform->setType('section' , PARAM_INT);
+//		$mform->addElement('select', 'section', get_string('section','mod_emarking'), $sections);
+//		$mform->setType('section' , PARAM_INT);
 		
 		$mform->addElement("hidden", "course", $cid);
 		$mform->setType( "course", PARAM_INT);
 		
-		$this->add_action_buttons(false, get_string('search', 'mod_emarking'));
+		$this->add_action_buttons(false, get_string('searchcourses', 'mod_emarking'));
 		
 	}
 }

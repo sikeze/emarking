@@ -909,14 +909,14 @@ function emarking_time_progression($course, $fortable = null){
 		return 0;
 	}
 }
-function emarking_cycle_tabs($selectedcourse, $selectedsection, $selectedcategory, $course){
+function emarking_cycle_tabs($selectedcourse, $selectedcategory, $course){
 	global $DB;
 
 	$getemarkingssql = 'SELECT ee.id AS id,
 				ee.name AS name
 				FROM {emarking_exams} AS ee
-				INNER JOIN {course} AS c ON (ee.course = c.id AND c.shortname LIKE "%'.$selectedcourse.'-'.$selectedsection.'%")
-				INNER JOIN {course_categories} AS cc ON (c.category = cc.id AND cc.name = "'.$selectedcategory.'")';
+				INNER JOIN {course} AS c ON (ee.course = c.id AND c.shortname = "'.$selectedcourse.'")';
+//				INNER JOIN {course_categories} AS cc ON (c.category = cc.id AND cc.name = "'.$selectedcategory.'")';
 
 	$getemarkings = $DB->get_records_sql($getemarkingssql);
 
@@ -925,7 +925,7 @@ function emarking_cycle_tabs($selectedcourse, $selectedsection, $selectedcategor
 	$emarkingtabs[] = new tabobject(0,
 			new moodle_url("/mod/emarking/reports/cycle.php", array(
 					"course" => $course->id, "emarking" => 0,
-					"selectedcourse" => $selectedcourse, "selectedsection" => $selectedsection,
+					"selectedcourse" => $selectedcourse,
 					"selectedcategory" => $selectedcategory,
 					"currenttab" => 0
 			)),
@@ -937,7 +937,7 @@ function emarking_cycle_tabs($selectedcourse, $selectedsection, $selectedcategor
 		$emarkingtabs[] = new tabobject($tabid,
 				new moodle_url("/mod/emarking/reports/cycle.php", array(
 						"course" => $course->id, "emarking" => $emarkings->id,
-						"selectedcourse" => $selectedcourse, "selectedsection" => $selectedsection,
+						"selectedcourse" => $selectedcourse,
 						"selectedcategory" => $selectedcategory,
 						"currenttab" => $tabid
 				)),

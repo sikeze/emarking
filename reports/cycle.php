@@ -27,7 +27,8 @@
 require_once(dirname(dirname(dirname(dirname(__FILE__)))) . "/config.php");
 require_once($CFG->dirroot . "/mod/emarking/locallib.php");
 require_once(dirname(__FILE__) . '/locallib.php');
-require_once(dirname(__FILE__) . '/forms/cycle_form.php');
+require_once(dirname(__FILE__) . '/forms/category_form.php');
+require_once(dirname(__FILE__) . '/forms/courses_form.php');
 
 global $DB, $USER, $CFG, $OUTPUT, $COURSE;
 
@@ -36,7 +37,7 @@ $courseid = required_param("course", PARAM_INT);
 $emarkingid = optional_param("emarking", -1, PARAM_INT);
 $selectedcategory = optional_param("selectedcategory", "NULL", PARAM_TEXT);
 $selectedcourse = optional_param("selectedcourse", "NULL", PARAM_TEXT);
-$selectedsection = optional_param("selectedsection", -1, PARAM_INT);
+
 $currenttab = optional_param("currenttab", 0, PARAM_INT);
 
 // First check that the user is logged in.
@@ -72,34 +73,44 @@ $PAGE->set_title(get_string("emarking", "mod_emarking"));
 $PAGE->set_pagelayout("incourse");
 $PAGE->navbar->add(get_string("cycle", "mod_emarking"));
 
-$formparameters = array($USER->id, $courseid);
-$addform = new cycle_form(null, $formparameters);
-
+$categoryparameters = array($USER->id, $courseid);
+$categoryform = new category_form(null, $categoryparameters);
 
 echo $OUTPUT->header();
 	// data of the current course
 	$currentcategory = $DB-> get_record('course_categories', array('id' => $COURSE->category), 'name');
-	$curretcourse = explode('-', $COURSE->shortname);
+	$curretcourse = $COURSE->shortname;
 	
-	if($selectedcategory == "NULL" && $selectedcourse == "NULL" && $selectedsection == -1){
+	if($selectedcategory == "NULL" && $selectedcourse == "NULL"){
 		$selectedcategory = $currentcategory->name;
-		$selectedcourse = $curretcourse[2];
-		$selectedsection = $curretcourse[3];
+		$selectedcourse = $curretcourse;
 	}
 
 	echo html_writer::div('<h2>'.get_string('filters', 'mod_emarking').'</h2>');;
 
-	$addform->display();
+	$categoryform->display();
 	
-	if($datas = $addform->get_data()){
-			$selectedcourse = $datas->courses;
-			$selectedsection = $datas->section;
-			$selectedcategory = $datas->category;
+	if($categorydata = $categoryform->get_data()){
+			//$selectedcourse = $datas->courses;
+			$selectedcategory = $categorydata->category;			
+ 			
 	}
-	$emarkingtabs = emarking_cycle_tabs($selectedcourse, $selectedsection, $selectedcategory, $course);
+	if($selectedcategory != 'NULL'){
+		$courseparameters = array($USER->id, $selectedcategory, $courseid);
+		$courseform = new courses_form(null, $courseparameters);
+		$courseform->display();
+	}
+		
+		if($coursedata = $courseform->get_data()){
+			$selectedcategory = $coursedata->category;	
+			$selectedcourse = $coursedata->courses;
+		var_dump($coursedata);
+		}
 	
+	
+	$emarkingtabs = emarking_cycle_tabs($selectedcourse, $selectedcategory, $course);
 	echo $OUTPUT->tabtree($emarkingtabs, $currenttab);
-	
+
 	$summarychartdata = json_encode([[0,0]]);
   	if($currenttab == 0){
   		define('EMARKING_TO_PRINT',0);
