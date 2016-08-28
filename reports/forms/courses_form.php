@@ -35,7 +35,7 @@ class courses_form extends moodleform {
 		$userid = $instance['0'];
 		$category = $instance['1'];
 		$cid = $instance['2'];
-//		var_dump($category);
+		
 		$teachercoursessql = "SELECT c.id AS course_id,
 				cc.name AS category_name,
 				c.shortname AS course_name,
@@ -50,42 +50,18 @@ class courses_form extends moodleform {
 		
 		$teachercourses = $DB->get_records_sql($teachercoursessql, array($USER->id, $category));
 		
-//		$categories = array();
-//		$shortname = array();
-//		$courseparameters = array();
-//		$sections = array();
-		
 		foreach($teachercourses as $coursedata){
 			
 			$shortname[$coursedata->course_name] = $coursedata->course_name;
-//			$courseparameters[] = array(explode('-', $coursedata->course_name), $coursedata->course_id);
-			
-// 			foreach($courseparameters as $key => $parameters){
-				
-// 				$shortname[$parameters[0][2]] = $parameters[0][2];
-// 				$sections[$parameters[0][3]] = $parameters[0][3];
-// 			}
  		}
 
-//		$category[] = array_unique($categories);
 		$courses = array_unique($shortname);
-//		var_dump($courses);
-//		$sections = array_unique($sections);
-		
-//		$out = html_writer::div('<h2>'.get_string('filters','mod_emarking').'</h2>');
-//		echo $out;
-		
-//		$mform->addElement('select', 'category', get_string('category','mod_emarking'), $categories);
-//		$mform->setType( 'category', PARAM_TEXT);
-		
+	
 		$mform->addElement('select', 'courses', get_string('course','mod_emarking'), $courses);
 		$mform->setType('courses' , PARAM_TEXT);
-		
-//		$mform->addElement('select', 'section', get_string('section','mod_emarking'), $sections);
-//		$mform->setType('section' , PARAM_INT);
 
 		$mform->addElement("hidden", "category", $category);
-		$mform->setType( "category", PARAM_INT);
+		$mform->setType( "category", PARAM_TEXT);
 		
 		$mform->addElement("hidden", "course", $cid);
 		$mform->setType( "course", PARAM_INT);

@@ -91,23 +91,26 @@ echo $OUTPUT->header();
 	$categoryform->display();
 	
 	if($categorydata = $categoryform->get_data()){
-			//$selectedcourse = $datas->courses;
-			$selectedcategory = $categorydata->category;			
- 			
-	}
+			$selectedcategory = $categorydata->category;
+			var_dump($selectedcategory);
+ 	}
+ 	
 	if($selectedcategory != 'NULL'){
 		$courseparameters = array($USER->id, $selectedcategory, $courseid);
 		$courseform = new courses_form(null, $courseparameters);
 		$courseform->display();
 	}
 		
-		if($coursedata = $courseform->get_data()){
-			$selectedcategory = $coursedata->category;	
-			$selectedcourse = $coursedata->courses;
-		var_dump($coursedata);
-		}
-	
-	
+	if($coursedata = $courseform->get_data()){
+		$selectedcategory = $coursedata->category;	
+		$selectedcourse = $coursedata->courses;
+		var_dump($selectedcategory);
+		var_dump($selectedcourse);		
+	}
+
+	$out = html_writer::div('<h2>'.$selectedcourse.'</h2>');
+	echo $out;
+		
 	$emarkingtabs = emarking_cycle_tabs($selectedcourse, $selectedcategory, $course);
 	echo $OUTPUT->tabtree($emarkingtabs, $currenttab);
 
