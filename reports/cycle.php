@@ -104,7 +104,6 @@ echo html_writer::div('<h2>'.get_string('filters', 'mod_emarking').'</h2>');;
 
 $categoryform->display();	
 if($categorydata = $categoryform->get_data()){
-	//$selectedcourse = $datas->courses;
 	$selectedcategory = $categorydata->category;			
 }
 

@@ -915,10 +915,9 @@ function emarking_cycle_tabs($selectedcourse, $selectedcategory, $course){
 	$getemarkingssql = 'SELECT ee.id AS id,
 				ee.name AS name
 				FROM {emarking_exams} AS ee
-				INNER JOIN {course} AS c ON (ee.course = c.id AND c.shortname = "'.$selectedcourse.'")';
-//				INNER JOIN {course_categories} AS cc ON (c.category = cc.id AND cc.name = "'.$selectedcategory.'")';
+				INNER JOIN {course} AS c ON (ee.course = c.id AND c.shortname = ?)';
 
-	$getemarkings = $DB->get_records_sql($getemarkingssql);
+	$getemarkings = $DB->get_records_sql($getemarkingssql, array($selectedcourse));
 
 	$emarkingtabs = array();
 
