@@ -45,7 +45,9 @@ require_login($course->id);
 if (isguestuser()) {
     die();
 }
-$delete = optional_param('delete', 0, PARAM_INT);
+$action = optional_param('action', 'view', PARAM_ALPHA);
+$digitizedanswerid = optional_param('did', 0, PARAM_INT);
+$usercanmanageanswersfiles = has_capability('mod/emarking:uploadexam', $context) || is_siteadmin();
 // Set navigation parameters.
 $PAGE->set_url($url);
 $PAGE->set_context($context);
@@ -121,25 +123,36 @@ if ($mform->get_data()) {
     }
 }
 $deletedsuccessfull = false;
-if($delete) {
+if($action === 'delete') {
     require_capability('mod/emarking:uploadexam', $context);
-    $fileidtodelete = $DB->get_record('emarking_digitized_answers', array('id'=>$delete));
-    if(!$fileidtodelete) {
+    if(!$DB->record_exists('emarking_digitized_answers', array('id'=>$digitizedanswerid))) {
         print_error('Invalid id for digitized answer to be deleted');
     }
     $fs = get_file_storage();
-    $fs->delete_area_files($context->id, 'mod_emarking', 'upload', $delete);
-    $DB->delete_records('emarking_digitized_answers', array('id'=>$delete));
-    $deletedsuccessfull = true;
+    $fs->delete_area_files($context->id, 'mod_emarking', 'upload', $digitizedanswerid);
+    $DB->delete_records('emarking_digitized_answers', array('id'=>$digitizedanswerid));
+    // Display confirmation page before moving to process.
+    redirect($url, get_string('transactionsuccessfull', 'mod_emarking'), 3);
+    die();
+} elseif($action === 'process') {
+    if(!is_siteadmin()) {
+        print_error('Invalid access');
+    }
+    if(! $digitizedanswer = $DB->get_record('emarking_digitized_answers',
+            array('id'=>$digitizedanswerid))) {
+        print_error('Invalid id for digitized answer to process');
+    }
+    $digitizedanswer->status = EMARKING_DIGITIZED_ANSWER_UPLOADED;
+    $DB->update_record('emarking_digitized_answers', $digitizedanswer);
+    // Display confirmation page before moving to process.
+    redirect($url, get_string('transactionsuccessfull', 'mod_emarking'), 3);
+    die();
 }
 // Display form for uploading zip file.
 echo $OUTPUT->header();
 echo $OUTPUT->heading($emarking->name);
 echo $OUTPUT->tabtree(emarking_tabs($context, $cm, $emarking), 'uploadanswers');
 $digitizedanswersfiles = emarking_get_digitized_answer_files($emarking);
-if($deletedsuccessfull) {
-    echo $OUTPUT->notification(get_string('transactionsuccessfull', 'mod_emarking'), 'notifysuccess');
-}
 if (count($digitizedanswersfiles) == 0) {
     echo $OUTPUT->notification(get_string('nodigitizedanswerfiles', 'mod_emarking'), 'notifymessage');
 } else {
@@ -155,10 +168,33 @@ if (count($digitizedanswersfiles) == 0) {
     );
     foreach($digitizedanswersfiles as $file) {
         $actions = array();
-        $deleteurl = new moodle_url('/mod/emarking/print/uploadanswers.php', array('id'=>$cm->id, 'delete'=>$file->id));
+        $deleteurl = new moodle_url('/mod/emarking/print/uploadanswers.php',
+            array('id'=>$cm->id, 'action' => 'delete', 'did'=>$file->id));
+        $processurl = new moodle_url('/mod/emarking/print/uploadanswers.php',
+            array('id'=>$cm->id, 'action' => 'process', 'did'=>$file->id));
+        $changetouploadedurl = new moodle_url('/mod/emarking/print/uploadanswers.php',
+            array('id'=>$cm->id, 'action' => 'changetouploaded', 'did'=>$file->id));
         if (($file->status == EMARKING_DIGITIZED_ANSWER_ERROR_PROCESSING || $file->status <= EMARKING_DIGITIZED_ANSWER_UPLOADED)
-            && has_capability('mod/emarking:uploadexam', $context)) {
+            && $usercanmanageanswersfiles) {
             $actions[] = $OUTPUT->action_icon($deleteurl, new pix_icon('i/delete', 'delete', null, array(
+                'style' => 'width:1.5em;'
+            )));
+        }
+        elseif ($file->status != EMARKING_DIGITIZED_ANSWER_BEING_PROCESSED
+            && $usercanmanageanswersfiles) {
+            $actions[] = $OUTPUT->action_icon($processurl, new pix_icon('i/reload', 'reload', null, array(
+                'style' => 'width:1.5em;'
+            )));
+        }
+        elseif (($file->status == EMARKING_DIGITIZED_ANSWER_PROCESSED || $file->status == EMARKING_DIGITIZED_ANSWER_ERROR_PROCESSING)
+            && $usercanmanageanswersfiles) {
+            $actions[] = $OUTPUT->action_icon($changetouploadedurl, new pix_icon('i/scheduled', 'scheduled', null, array(
+                'style' => 'width:1.5em;'
+            )));
+        }
+        elseif ($file->status == EMARKING_DIGITIZED_ANSWER_BEING_PROCESSED
+            && is_siteadmin()) {
+            $actions[] = $OUTPUT->action_icon($processurl, new pix_icon('i/reload', 'reload', null, array(
                 'style' => 'width:1.5em;'
             )));
         }

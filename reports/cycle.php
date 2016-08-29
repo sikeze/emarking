@@ -40,6 +40,12 @@ $selectedcourse = optional_param("selectedcourse", "NULL", PARAM_TEXT);
 // EMarking tab I want to show, "0" means the summary tab.
 $currenttab = optional_param("currenttab", 0, PARAM_INT);
 
+// definition for this particular page of EMarking.
+define('EMARKING_TO_PRINT',0);
+define('EMARKING_PRINTED',5);
+define('EMARKING_STATUS_GRADED',18);
+define('EMARKING_STATUS_FINAL_PUBLISHED',45);
+define('EMARKING_STATUS_2DAYS_PUBLISHED',50);
 // First check that the user is logged in.
 require_login();
 if (isguestuser()) {
@@ -120,12 +126,7 @@ $summarychartdata = json_encode([[0,0]]);
 // If you are in the summary tab.
 if($currenttab == 0){
 	
-	// definition for this particular page of EMarking.
-	define('EMARKING_TO_PRINT',0);
-	define('EMARKING_PRINTED',5);
-	define('EMARKING_STATUS_GRADED',18);
-	define('EMARKING_STATUS_FINAL_PUBLISHED',45);
-	define('EMARKING_STATUS_2DAYS_PUBLISHED',50);
+
   	
 	// Div for summart chart.
   	echo html_writer::tag('div','', array('id' => 'summarychart','style' => 'height: 600px;'));
