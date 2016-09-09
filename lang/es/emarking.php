@@ -773,3 +773,4 @@ $string['finalpublicationdays'] = 'Dias en publicación final';
 $string['totaldays'] = 'Dias totales';
 $string['searchcourses'] = 'Buscar Cursos';
 $string['search'] = 'Buscar';
+$string['justice_perception'] = 'Percepción de Justicia';

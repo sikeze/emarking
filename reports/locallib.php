@@ -1127,4 +1127,50 @@ function emarking_markers_corrections($emarkingid){
 		}
 	}
 }
+function emarking_justice_perception($course){
+	global $DB;
+	
+	$getemarkingssql = 'SELECT ee.id AS id
+				FROM {emarking_exams} AS ee
+				INNER JOIN {course} AS c ON (ee.course = c.id)';
+	
+	$getemarkings = $DB->get_records_sql($getemarkingssql, array($course));
+	
+	foreach($getemarkings as $id){
+		$emarkingids[] = $id->id;
+	}
+	$emarkingids = implode(',',$emarkingids);
+	
+	$perceptiondatasql = "SELECT CONCAT (u.firstname, ' ', u.lastname)AS name, 
+					COUNT(egh.timemodified) AS regrades,
+					AVG(ep.overall_fairness) AS justice_perception,
+					FROM_UNIXTIME(MAX(egh.timecreated) - MIN(egh.timecreated), '%Y-%m-%d') AS correction_time
+					FROM {emarking_perception} AS ep
+					INNER JOIN {emarking_submission} AS es ON (ep.submission = es.id)
+					INNER JOIN {emarking_exams} AS ee ON (es.emarking = ee.id AND ee.id IN(?))
+					INNER JOIN {emarking_draft} AS ed ON (ed.emarkingid = ee.id)
+					INNER JOIN {emarking_grade_history} AS egh ON (egh.draftid = ed.id)
+					INNER JOIN {user} AS u ON (u.id = egh.marker)
+					GROUP BY u.id";
+	$perceptiondata = $DB->get_records_sql($perceptiondatasql, array($emarkingids));
+	
+	$tablehead = array(' ',get_string('regrades', 'mod_emarking'), get_string('justice_perception', 'mod_emarking'),
+			get_string('daysincorrection', 'mod_emarking')
+	);
+	$tablerow = array();
+	$tabledata = array();
+	foreach($perceptiondata as $data){
+		$tablerow[] = $data->name;
+		$tablerow[] = $data->regrades;
+		$tablerow[] = $data->justice_perception;
+		$tablerow[] = $data->correction_time;
+		$tabledata[] = $tablerow;
+		$tablerow = array();
+	}
+	
+	$table = new html_table();
+	$table->head = $tablehead;
+	$table->data = $tabledata;
+	return html_writer::table($table);
+}
 

@@ -23,10 +23,11 @@
 
 require_once(dirname(dirname(dirname(dirname(dirname(__FILE__)))))."/config.php");
 require_once ($CFG->libdir . "/formslib.php");
+require_once($CFG->dirroot.'/course/moodleform_mod.php');
 
 class category_form extends moodleform {
 
-	function definition() {
+	public function definition(){
 		global $DB, $USER;
 		
 		$mform = $this->_form;
@@ -49,6 +50,7 @@ class category_form extends moodleform {
 		
 		$teachercourses = $DB->get_records_sql($teachercoursessql, array($USER->id));
 		
+		$categories = array('Seleccione');
 		foreach($teachercourses as $coursedata){
 			
 			$categories[$coursedata->category_name] = $coursedata->category_name;
@@ -67,5 +69,17 @@ class category_form extends moodleform {
 		
 		$this->add_action_buttons(false, get_string('searchcourses', 'mod_emarking'));
 		
+	}
+	
+	public function validation($data, $files){
+		 
+		$errors = array();
+	
+		if($data['category'] == 0){
+			$errors['category'] = 'Debe seleccionar una categoria';
+		}
+	
+		return $errors;
+			
 	}
 }

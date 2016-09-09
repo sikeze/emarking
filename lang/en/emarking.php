@@ -766,4 +766,5 @@ $string['regradeddays'] = 'Regradeded days';
 $string['finalpublicationdays'] = 'Days in final publication';
 $string['totaldays'] = 'Total days';
 $string['searchcourses'] = 'Search Courses';
-$string['search'] = 'Search'; 
+$string['search'] = 'Search';
+$string['justice_perception'] = 'Justice Perception';
