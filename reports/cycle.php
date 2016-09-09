@@ -134,7 +134,7 @@ if($currenttab == 0){
   	// Emarkings days data to table.
   	echo emarking_table_creator(null,emarking_time_progression($course->id,1),null);
   	
-  	echo emarking_justice_perception($course->id);
+  	echo emarking_justice_perception($selectedcourse);
   	
 // If you are in a eMarking tab.  	
 }else{
