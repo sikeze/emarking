@@ -34,8 +34,8 @@ global $DB, $USER, $CFG, $OUTPUT, $COURSE;
 
 $courseid = required_param("course", PARAM_INT);
 $emarkingid = optional_param("emarking", -1, PARAM_INT);
-$selectedcategory = optional_param("selectedcategory", "NULL", PARAM_TEXT);
-$selectedcourse = optional_param("selectedcourse", "NULL", PARAM_TEXT);
+$selectedcategory = optional_param("selectedcategory", "NULL", PARAM_RAW);
+$selectedcourse = optional_param("selectedcourse", "NULL", PARAM_RAW);
 
 // EMarking tab I want to show, "0" means the summary tab.
 $currenttab = optional_param("currenttab", 0, PARAM_INT);
@@ -133,6 +133,8 @@ if($currenttab == 0){
   	
   	// Emarkings days data to table.
   	echo emarking_table_creator(null,emarking_time_progression($course->id,1),null);
+  	
+  	echo emarking_justice_perception($selectedcourse);
   	
 // If you are in a eMarking tab.  	
 }else{
