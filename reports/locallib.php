@@ -1270,10 +1270,10 @@ function emarking_markers_corrections($emarkingid){
 }
 function emarking_justice_perception($course){
 	global $DB;
-	
+
 	$getemarkingssql = 'SELECT ee.id AS id
 				FROM {emarking_exams} AS ee
-				INNER JOIN {course} AS c ON (ee.course = c.id)';
+				INNER JOIN {course} AS c ON (ee.course = c.id AND c.shortname = ?)';
 	
 	$getemarkings = $DB->get_records_sql($getemarkingssql, array($course));
 	
@@ -1285,7 +1285,7 @@ function emarking_justice_perception($course){
 	$perceptiondatasql = "SELECT CONCAT (u.firstname, ' ', u.lastname)AS name, 
 					COUNT(egh.timemodified) AS regrades,
 					AVG(ep.overall_fairness) AS justice_perception,
-					FROM_UNIXTIME(MAX(egh.timecreated) - MIN(egh.timecreated), '%Y-%m-%d') AS correction_time
+					(MAX(egh.timecreated) - MIN(egh.timecreated))/86400 AS correction_time
 					FROM {emarking_perception} AS ep
 					INNER JOIN {emarking_submission} AS es ON (ep.submission = es.id)
 					INNER JOIN {emarking_exams} AS ee ON (es.emarking = ee.id AND ee.id IN(?))
