@@ -45,7 +45,6 @@ define('EMARKING_TO_PRINT',0);
 define('EMARKING_PRINTED',5);
 define('EMARKING_STATUS_GRADED',18);
 define('EMARKING_STATUS_FINAL_PUBLISHED',45);
-define('EMARKING_STATUS_2DAYS_PUBLISHED',50);
 // First check that the user is logged in.
 require_login();
 if (isguestuser()) {
