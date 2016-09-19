@@ -660,7 +660,7 @@ function emarking_time_progression($course, $fortable = null){
 	$sqlemarking = "SELECT e.id AS id, e.name as name, eexam.timecreated AS printorder, eexam.printdate AS printdate, MIN(d.timecreated) AS digitalized,
 							MIN(d.timecorrectionstarted) AS correctionstarted, MAX(d.timecorrectionended) AS corrected, MIN(d.timefirstpublished) AS firstpublished,
 							MIN(d.timeregradingstarted) AS regradingstarted, MAX(d.timeregradingended) AS regraded, MAX(d.timelastpublished) AS lastpublished, 
-							d.status as status
+							MIN(d.status) as status
 							FROM mdl_emarking_exams AS eexam
                             INNER JOIN mdl_emarking AS e ON (e.id = eexam.emarking)
 							LEFT JOIN mdl_emarking_draft AS d ON (e.id = d.emarkingid)
@@ -693,8 +693,8 @@ function emarking_time_progression($course, $fortable = null){
 				LEFT JOIN {emarking_regrade}  r ON (r.draft = d.id AND r.criterion = l.criterionid AND r.accepted = 0)
 				GROUP BY nm.id, s.student) as y";
 				$mark = $DB->get_record_sql($marksql,array('emarkingid' => $emarking->id));
-				
 				$time = time();
+				
 				if($emarking->printdate == 0){
 					$status = EMARKING_TO_PRINT;
 				
@@ -704,31 +704,31 @@ function emarking_time_progression($course, $fortable = null){
 						$time = ($emarking->printdate + 2592000);
 					}
 				
-				}elseif(is_null($emarking->correctionstarted) ){
+				}elseif(is_null($emarking->correctionstarted) || $emarking->status == EMARKING_STATUS_SUBMITTED){
 					$status = EMARKING_STATUS_SUBMITTED;
 					if(((time() - $emarking->digitalized)/86400)>30){
 						$time = ($emarking->digitalized + 2592000);
 					}
 				
-				}elseif(is_null($emarking->corrected)|| $mark->graded == null && $emarking->status == EMARKING_STATUS_GRADING ){
+				}elseif($mark->graded == null && $emarking->status == EMARKING_STATUS_GRADING ){
 					$status = EMARKING_STATUS_GRADING;
 						
-				}elseif(is_null($emarking->firstpublished || $mark->graded == 1 && $emarking->status == EMARKING_STATUS_GRADING)){
+				}elseif(is_null($emarking->firstpublished && $mark->graded == 1 && $emarking->status == EMARKING_STATUS_GRADING)){
 					$status = EMARKING_STATUS_GRADED;
 					if(((time() - $emarking->corrected)/86400)>15){
 						$time = ($emarking->corrected + 1296000);
 					}
-				
+					
 				}elseif(is_null($emarking->regradingstarted) && $emarking->status ==EMARKING_STATUS_PUBLISHED ){
 					$status = EMARKING_STATUS_PUBLISHED;
 					if(((time() - $emarking->firstpublished)/86400)>10){
 						$time = ($emarking->firstpublished + 864000);
 					}
 				
-				}elseif(is_null($emarking->regraded) || $emarking->status ==EMARKING_STATUS_REGRADING){
+				}elseif($emarking->status ==EMARKING_STATUS_REGRADING){
 					$status = EMARKING_STATUS_REGRADING;
 				
-				}elseif(is_null($emarking->lastpublished) || $emarking->lastpublished < $emarking->regraded || $emarking->status ==EMARKING_STATUS_REGRADING_RESPONDED){
+				}elseif($emarking->lastpublished < $emarking->regraded && $emarking->status ==EMARKING_STATUS_GRADING){
 					$status = EMARKING_STATUS_REGRADING_RESPONDED;
 					if(((time() - $emarking->regraded)/86400)>5){
 						$time = ($emarking->regraded + 432000);
@@ -808,7 +808,7 @@ function emarking_time_progression($course, $fortable = null){
 								(round(($emarking->digitalized - $emarking->printdate)/86400)),
 								(round(($emarking->correctionstarted - $emarking->digitalized)/86400)),
 								(round(($emarking->corrected - $emarking->correctionstarted)/86400)),
-								(round(($time - $emarking->corrected)/86400)),
+								(round((time() - $emarking->corrected)/86400)),
 								0,0,0,0,0,
 								(round(($time - $emarking->printorder)/86400))." Days");
 						if($fortable == 1){
@@ -896,6 +896,7 @@ function emarking_time_progression($course, $fortable = null){
 						$position++;
 						break;
 				}
+				$status = null;
 			}
 			return $emarkingarray;
 	}else{
@@ -959,7 +960,8 @@ global $DB;
 			MIN(ed.timeregradingstarted) AS regradingstarted,
 			MAX(ed.timeregradingended) AS regraded,
 			MAX(ed.timelastpublished) AS lastpublished,
-			MIN(ed.status) as status
+			MIN(ed.status) as status,
+			count(ed.id) as draftnums
 			FROM {emarking_exams} AS ee
             INNER JOIN {emarking} AS e ON (e.id = ee.emarking AND ee.id = ?)
 			LEFT JOIN {emarking_draft} AS ed ON (e.id = ed.emarkingid)';
@@ -989,16 +991,16 @@ global $DB;
 				$time = ($emarking->printdate + 2592000)*1000;
 			}
 		
-		}elseif(is_null($emarking->correctionstarted) ){
+		}elseif(is_null($emarking->correctionstarted) || $emarking->status == EMARKING_STATUS_SUBMITTED){
 			$status = EMARKING_STATUS_SUBMITTED;
 			if(((time() - $emarking->digitalized)/86400)>30){
 				$time = ($emarking->digitalized + 2592000)*1000;
 			}
 		
-		}elseif(is_null($emarking->corrected) && $mark->graded == null && $emarking->status == EMARKING_STATUS_GRADING ){
+		}elseif($mark->graded == null && $emarking->status == EMARKING_STATUS_GRADING){
 			$status = EMARKING_STATUS_GRADING;
 			
-		}elseif(is_null($emarking->firstpublished) && $mark->graded == 1 && $emarking->status == EMARKING_STATUS_GRADING){
+		}elseif(is_null($emarking->firstpublished) && $mark->graded == $emarking->draftnums && $emarking->status == EMARKING_STATUS_GRADING){
 			$status = EMARKING_STATUS_GRADED;
 			if(((time() - $emarking->corrected)/86400)>15){
 				$time = ($emarking->corrected + 1296000)*1000;
@@ -1010,10 +1012,11 @@ global $DB;
 				$time = ($emarking->firstpublished + 864000)*1000;
 			}
 		
-		}elseif(is_null($emarking->regraded) && $emarking->status ==EMARKING_STATUS_REGRADING){
+		}elseif($emarking->status ==EMARKING_STATUS_REGRADING){
 			$status = EMARKING_STATUS_REGRADING;
+			
 				
-		}elseif(is_null($emarking->lastpublished) && $emarking->lastpublished < $emarking->regraded && $emarking->status ==EMARKING_STATUS_REGRADING_RESPONDED){
+		}elseif(($emarking->lastpublished < $emarking->regraded) && $emarking->status == EMARKING_STATUS_GRADING){
 			$status = EMARKING_STATUS_REGRADING_RESPONDED;
 			if(((time() - $emarking->regraded)/86400)>5){
 				$time = ($emarking->regraded + 432000)*1000;
@@ -1025,7 +1028,7 @@ global $DB;
 				$time = ($emarking->lastpublished + 432000)*1000;
 			}
 		}
-		echo $status;
+		
 		$ganttarray = array();
 		switch ($status) {
 				
@@ -1128,20 +1131,38 @@ function emarking_area_chart($emarkingid){
 	global $DB;
 	
 	$chartparameterssql = "SELECT COUNT(ed.id) AS quantity,
-				MIN(FROM_UNIXTIME(ed.timecorrectionstarted, '%Y-%m-%d')) AS startdate,
-				MAX(FROM_UNIXTIME(ed.timelastpublished, '%Y-%m-%d')) AS enddate
+				FROM_UNIXTIME(MIN(ed.timecreated), '%Y-%m-%d') AS mindigitalized,
+				FROM_UNIXTIME(MAX(ed.timecreated), '%Y-%m-%d') AS maxdigitalized,
+				FROM_UNIXTIME(MAX(ed.timecorrectionended), '%Y-%m-%d') AS corrected,
+				FROM_UNIXTIME(MAX(ed.timefirstpublished), '%Y-%m-%d') AS firstpublished,
+				FROM_UNIXTIME(MAX(ed.timeregradingended), '%Y-%m-%d') AS regraded,
+				FROM_UNIXTIME(MAX(ed.timelastpublished), '%Y-%m-%d') AS lastpublished
 				FROM mdl_emarking_draft AS ed
 				WHERE ed.emarkingid = ?";
 	
 	if($chartparameters = $DB->get_record_sql($chartparameterssql, array($emarkingid))){
-
-		$date  = $chartparameters->startdate;
+		
+		$date= $chartparameters->mindigitalized;
 		$date = date('Y-m-d', strtotime(str_replace('-','/', $date)));
 		$date =  date('Y-m-d', strtotime($date. ' - 1 days'));
-		$enddate = $chartparameters->enddate;
+
+		if(!is_null($chartparameters->lastpublished)){
+			$enddate = $chartparameters->lastpublished;
+		}elseif(!is_null($chartparameters->regraded)){
+			$enddate = $chartparameters->regraded;
+		}elseif(!is_null($chartparameters->firstpublished)){
+			$enddate = $chartparameters->firstpublished;
+		}elseif(!is_null($chartparameters->corrected)){
+			$enddate = $chartparameters->corrected;
+		}elseif(!is_null($chartparameters->maxdigitalized)){
+			$enddate = $chartparameters->maxdigitalized;
+		}else{
+			return 0;
+		}
+		
+		
 		$enddate = date('Y-m-d', strtotime(str_replace('-','/', $enddate)));
 		$enddate =  date('Y-m-d', strtotime($enddate. ' + 1 days'));
-		
 		$draftsdatasql = "SELECT ed.id AS draftid,
 					FROM_UNIXTIME(ed.timecorrectionstarted, '%Y-%m-%d') AS correctionstarted,
 					FROM_UNIXTIME(ed.timecorrectionended, '%Y-%m-%d') AS correctionended,
@@ -1153,7 +1174,7 @@ function emarking_area_chart($emarkingid){
 					WHERE ed.emarkingid = ?";
 		
 		if($draftsdata = $DB->get_records_sql($draftsdatasql, array($emarkingid))){
-			print_r($draftsdata);
+			
 		 	$currentdata = array();
 			foreach($draftsdata as $draftdates){
 				$currentdata[$draftdates->draftid] = 'Digitalized';
@@ -1210,8 +1231,7 @@ function emarking_area_chart($emarkingid){
 				array_push($areachart,$datacount);
 				$datacount = array();
 				$date =  date('Y-m-d', strtotime($date. ' + 1 days'));
-			}
-			
+			}	
 			return $areachart;
 		}
 	}
@@ -1249,6 +1269,7 @@ function emarking_markers_corrections($emarkingid){
 			$date = 0-0-0;
 			$lenght = count($comments);
 			$datecount = 1;
+
 			foreach ($comments as $comment){
 				if($date == 0-0-0){
 					$arraystacking['date'] = strtotime ( '-1 day' , strtotime ( $comment->date  ) ) ;
@@ -1257,9 +1278,10 @@ function emarking_markers_corrections($emarkingid){
 				}
 				$arraystacking['date'] = $comment->date;
 				$arraystacking[$comment->name] = $arraystacking[$comment->name] + 1;
-				if($date < $comment->date || $datecount == $lenght ){
+				if(strtotime($date) < strtotime($comment->date) || $datecount == $lenght) {
 						array_push($arraymarkers,$arraystacking);
 						$date = $comment->date;
+						echo $datecount;
 				}
 				$datecount++;
 			}

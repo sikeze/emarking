@@ -425,7 +425,6 @@ function emarking_add_mark($submission, $draft, $emarking, $context) {
         $regrade->comment = '';
         $regrade->motive = 0;
         $regrade->markercomment = '';
-        // We also update de correction times for no regrading
         if($draft->timecorrectionstarted == null){
         	$draft->timecorrectionstarted = time();
         }
@@ -436,11 +435,6 @@ function emarking_add_mark($submission, $draft, $emarking, $context) {
         $regrade->markercomment = $comment;
         $regrade->timemodified = time();
         $DB->update_record('emarking_regrade', $regrade);
-        if($draft->timeregradingstarted == null){
-        	$draft->timeregradingstarted = time();
-        }
-        $draft->timeregradingended = time();
-        $DB->update_record('emarking_draft',$draft);
     }
     // Send the output.
     if ($finalgrade === false) {

@@ -139,7 +139,7 @@ if($currenttab == 0){
 }else{
 	
 	// Divs for EMarking chart tabs view.
-   	echo html_writer::div('','', array('id' => 'ganttchart','style' => 'height: 400px;'));
+   	echo html_writer::div('','', array('id' => 'ganttchart'));
    	echo html_writer::div('','', array('id' => 'areachart','style' => 'height: 400px;'));
    	echo html_writer::div('','', array('id' => 'markerschart','style' => 'height: 400px;'));
 }
@@ -227,13 +227,12 @@ echo $OUTPUT->footer();
 
 		// Load data
 		data.addRows(dataarray);
-
+		
 		var options = {
-			height: 400,
+			height:400,
 			gantt: {
 				trackHeight: 30
-			}
-		};
+			}};
 
 		var chart = new google.visualization.Gantt(document.getElementById('ganttchart'));
 
