@@ -117,24 +117,40 @@ if (!$directdownload && $token > 9999 && $_SESSION [$USER->sesskey . "smstoken"]
     echo $OUTPUT->footer();
     die();
 }
-if($directdownload) {
+if ($token > 9999 && ($_SESSION [$USER->sesskey . "smstoken"] === $token || $directdownload)) {
+	$now = new DateTime();
+	$tokendate = new DateTime();
+	$tokendate->setTimestamp($_SESSION [$USER->sesskey . "smsdate"]);
+	$diff = $now->diff($tokendate);
+	if ($diff->i > 5 && false) {
+	echo $OUTPUT->header();
+	echo $OUTPUT->notification(get_string("tokenexpired", "mod_emarking"), "notifyproblem");
+	$buttonurl = $incourse ? $courseurl : $coursecategoryurl;
+	echo $OUTPUT->single_button($buttonurl, get_string("back"), "get");
+	echo $OUTPUT->footer();
+	die();
+	}
+	// Add to Moodle log so some auditing can be done.
+	\mod_emarking\event\exam_downloaded::create_from_exam($exam, $contextcourse)->trigger();
 	// Get all the files uploaded as forms for this exam.
 	$fs = get_file_storage();
 	$files = $fs->get_area_files($contextcourse->id, 'mod_emarking', 'examstoprint', $exam->emarking);
 	// We filter only the PDFs.
 	$pdffilename = NULL;
 	foreach ($files as $filepdf) {
-		if ($filepdf->get_mimetype() === 'application/pdf') {
-			$pdffilename = $filepdf->get_filename();
-		}
+	if ($filepdf->get_mimetype() === 'application/pdf') {
+	    $pdffilename = $filepdf->get_filename();
+	}
 	}
 	// Verify that at least we have a PDF.
 	if (!$pdffilename) {
-		throw new Exception(get_string("examhasnopdf", "mod_emarking"));
+	throw new Exception(get_string("examhasnopdf", "mod_emarking"));
 	}
 	redirect($CFG->wwwroot . '/pluginfile.php/' . $contextcourse->id .'/mod_emarking/examstoprint/' .$exam->emarking . '/'
-			. $pdffilename);
+	. $pdffilename . '?token=' . $token);
 	die();
+}
+if($directdownload) {
 	echo json_encode(array(
             'error' => get_string('error') . core_text::strtolower(' ' . get_string('exam', 'mod_emarking') . ' ' .
                     ' Direct download does not require token.')));
