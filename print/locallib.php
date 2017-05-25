@@ -421,7 +421,7 @@ function emarking_send_digitizing_notification($cron = true, $debug = false, $de
             $eventdata->fullmessagehtml = $posthtml;
             $eventdata->smallmessage = $postsubject;
             $eventdata->notification = 1;
-            $eventdata->courseid = $course->id;
+            //$eventdata->courseid = $course->id;
             message_send($eventdata);
         }
         // Save the date of the digitization.
@@ -1500,7 +1500,7 @@ function emarking_send_email_code($code, $user, $course, $examname) {
     $eventdata->fullmessagehtml = $thismessagehtml;
     $eventdata->smallmessage = $subject;
     $eventdata->notification = '0';
-    $eventdata->courseid = $course->id;
+    //$eventdata->courseid = $course->id;
     return message_send($eventdata);
 }
 
