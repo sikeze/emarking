@@ -1054,7 +1054,8 @@ class mod_emarking_mod_form extends moodleform_mod {
             $chkmarkers [] = $mform->createElement('checkbox', 'marker-' . $marker->id, null, 
                     $marker->firstname . " " . $marker->lastname);
         }
-        if(count($chkmarkers) > 0) var_dump($chkmarkers);
+        if(count($chkmarkers) > 0){
         return count($chkmarkers) > 0 ? $chkmarkers : false;
+        }
     }
 }
