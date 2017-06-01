@@ -869,6 +869,9 @@ function emarking_tabs($context, $cm, $emarking) {
         if (has_capability('mod/emarking:regrade', $context) && $emarking->type == EMARKING_TYPE_ON_SCREEN_MARKING) {
             $markingtab->subtree[] = new tabobject("regrades", $CFG->wwwroot . "/mod/emarking/marking/regraderequests.php?id={$cm->id}", get_string("regrades", 'mod_emarking'));
         }
+        if($emarking->evaluatefeedback && has_capability('mod/emarking:grade', $context)){
+        	$markingtab->subtree[] = new tabobject("evalfeedback", $CFG->wwwroot . "/mod/emarking/marking/summaryevalfeedback.php?id={$cm->id}", 'Evaluación del Feedback');
+        }
     }
     // Settings tab.
     $settingstab = new tabobject("settings", $CFG->wwwroot . "/mod/emarking/marking/settings.php?id={$cm->id}", get_string('settings'));
