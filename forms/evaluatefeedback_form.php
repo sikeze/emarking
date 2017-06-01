@@ -28,25 +28,27 @@ class evaluatefeedback_form extends moodleform {
 		$mform = $this->_form;
 		$instance = $this->_customdata;
 		$submissionid = $instance['submissionid'];
-		
-		$getmarkertime = 'SELECT sess.id, sess.userid, (sess.endtime - sess.starttime) AS time
-				FROM {emarking_session} AS sess INNER JOIN {emarking_draft} AS draft ON (sess.draftid = draft.id)
-				INNER JOIN {emarking_submission} AS sub ON (sub.id = draft.submissionid)
-				WHERE sub.id = ?';
-		$sessions = $DB->get_records_sql($getmarkertime, array($submissionid));
+
+		$sessions = $DB->get_records('emarking_session', array('draftid' => $submissionid));
 		$markers = array();
 		$totaltime = 0;
 		$usertime = 0;
+		$marksessions = 0;
+		$usersessions = 0;
 		foreach ($sessions as $session) {
 			if ($session->userid == $USER->id) {
-				$usertime += $session->time;
+				$usertime += ($session->endtime - $session->starttime);
+				$usersessions++;
 			}else {
-				$totaltime += $session->time;
+				$totaltime += ($session->endtime - $session->starttime);
 				if (!in_array($session->userid, $markers)) {
 					$markers [] = $session->userid;
 				}
+				$marksessions++;
 			}		
 		}
+		$usertime += (45 * $usersessions);
+		$totaltime += (45 * $marksessions);
 		
 		$valuesarray = array(
 				'null' => get_string('choosevalue', 'mod_emarking'),
@@ -67,6 +69,11 @@ class evaluatefeedback_form extends moodleform {
 		$mform->addElement('html', '<tr>
 				<td>'.get_string('countofmarkers', 'mod_emarking').'</td>
 				<td>'.$OUTPUT->pix_icon('i/cohort', 'markers')."&nbsp;".count($markers).'</td>
+				</tr>'
+		);
+		$mform->addElement('html', '<tr>
+				<td>'."Sesiones abiertas por los correctores".'</td>
+				<td>'.$OUTPUT->pix_icon('i/report', 'sessionsmarkers')."&nbsp;".$marksessions.'</td>
 				</tr>'
 		);
 		$mform->addElement('html', '<tr>

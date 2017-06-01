@@ -542,7 +542,7 @@ foreach($drafts as $draft) {
 $showpages->finish_html();
 
 // Used in conjunction with enhanced feedback
-if ($emarking->evaluatefeedback && $countdraft < $countstudents) {
+if ($emarking->evaluatefeedback && $countdraft < $countstudents && !has_capability('mod/emarking:grade', $context)) {
 	if($ispublished >= EMARKING_STATUS_PUBLISHED) {
 		require_once ($CFG->dirroot . '/mod/emarking/forms/evaluatefeedback_form.php');	
 		
