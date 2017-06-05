@@ -78,9 +78,9 @@ foreach ($allstudents as $student) {
 			eval.personalization,
 			eval.lastmodified,
 			eval.optionalcomment
-			FROM {emarking} AS e INNER JOIN {emarking_submission} AS sub ON (e.course = ? AND e.id = sub.emarking)
-			INNER JOIN {emarking_evaluatefeedback} AS eval ON (eval.submissionid = sub.id AND userid = ?)';
-	if ( !$answersform = $DB->get_record_sql($formresults, array($course->id, $student->id)) ) {
+			FROM {emarking} AS e INNER JOIN {emarking_draft} AS draft ON (e.id = ? AND e.id = draft.emarkingid)
+			INNER JOIN {emarking_evaluatefeedback} AS eval ON (eval.submissionid = draft.id AND userid = ?)';
+	if ( !$answersform = $DB->get_record_sql($formresults, array($emarking->id, $student->id)) ) {
 		$answersform = "No ha respondido";
 		$lasttime = " - ";
 	}else {
@@ -90,10 +90,10 @@ foreach ($allstudents as $student) {
 	$sessionresults = 'SELECT
 			sess.id,
 			SUM(sess.endtime - sess.starttime) AS time
-			FROM {emarking} AS e INNER JOIN {emarking_submission} AS sub ON (e.course = ? AND e.id = sub.emarking)
-			INNER JOIN {emarking_session} AS sess ON (sess.draftid = sub.id AND sess.userid = ?)
+			FROM {emarking} AS e INNER JOIN {emarking_draft} AS draft ON (e.id = ? AND e.id = draft.emarkingid)
+			INNER JOIN {emarking_session} AS sess ON (sess.draftid = draft.id AND sess.userid = ?)
 			GROUP BY sess.userid';
-	if(!$sessionsinfo = $DB->get_record_sql($sessionresults, array($course->id, $student->id)) ) {
+	if(!$sessionsinfo = $DB->get_record_sql($sessionresults, array($emarking->id, $student->id)) ) {
 		$time = gmdate('H:i', 0);
 	}else {
 		$time = gmdate('H:i', $sessionsinfo->time);
