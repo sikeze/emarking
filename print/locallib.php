@@ -447,7 +447,6 @@ function emarking_send_newprintorder_notification($exam, $course, $title = null,
     $pagestoprint = emarking_exam_total_pages_to_print($exam);
     $originals = $exam->totalpages + $exam->extrasheets;
     $copies = $exam->totalstudents + $exam->extraexams;
-    $totalsheets = $originals * $copies;
     $teachers = get_enrolled_users(context_course::instance($course->id), 'mod/emarking:receivenotification');
     $teachersnames = array();
     foreach($teachers as $teacher) {
@@ -471,7 +470,7 @@ function emarking_send_newprintorder_notification($exam, $course, $title = null,
     $posthtml .= '<tr><td>' . get_string('printlist', 'mod_emarking') . '</td><td>' . ($exam->printlist ? get_string('yes') : get_string('no')) . '</td></tr>';
     $posthtml .= '<tr><td>' . get_string('originals', 'mod_emarking') . '</td><td>' . $originals . '</td></tr>';
     $posthtml .= '<tr><td>' . get_string('copies', 'mod_emarking') . '</td><td>' . $copies . '</td></tr>';
-    $posthtml .= '<tr><td>' . get_string('totalpagesprint', 'mod_emarking') . '</td><td>' . $totalsheets . '</td></tr>';
+    $posthtml .= '<tr><td>' . get_string('totalpagesprint', 'mod_emarking') . '</td><td>' . $pagestoprint . '</td></tr>';
     $posthtml .= '</table>';
     $posthtml .= '';
     // Create the email to be sent.
@@ -487,7 +486,7 @@ function emarking_send_newprintorder_notification($exam, $course, $title = null,
     $posttext .= get_string('printlist', 'mod_emarking') . ' : ' . ($exam->printlist ? get_string('yes') : get_string('no')) . '\n';
     $posttext .= get_string('originals', 'mod_emarking') . ' : ' . $originals . '\n';
     $posttext .= get_string('copies', 'mod_emarking') . ' : ' . $copies . '\n';
-    $posttext .= get_string('totalpagesprint', 'mod_emarking') . ': ' . $totalsheets . '\n';
+    $posttext .= get_string('totalpagesprint', 'mod_emarking') . ': ' . $pagestoprint . '\n';
     emarking_send_notification($exam, $course, $postsubject, $posttext, $posthtml, $user);
 }
 
